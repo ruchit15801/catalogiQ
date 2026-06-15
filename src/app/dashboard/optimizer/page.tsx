@@ -91,9 +91,9 @@ export default function OptimizerTool() {
     // Animated progress steps
     const steps = [
       { p: 10, text: "Analyzing bounding box...", log: `Dead: ${deadWeight}g | Vol: ${Math.round(liveVol)}g` },
-      { p: 25, text: "Initializing Sharp.js engine...", log: "Sharp.js loaded" },
+      { p: 25, text: "Initializing optimization engine...", log: "Engine loaded" },
       { p: 40, text: `Generating variants (8 BGs × 4 coverages × 2 qualities)...`, log: "64 variants queued" },
-      { p: 60, text: "Processing with MozJPEG compression...", log: "EXIF stripped" },
+      { p: 60, text: "Compressing and optimizing files...", log: "Files optimized" },
       { p: 75, text: "Scoring variants by shipping impact...", log: "Score engine running" },
       { p: 90, text: "Selecting top 6 results...", log: "Ranking complete" },
     ];
@@ -172,7 +172,7 @@ export default function OptimizerTool() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-[#0f172a]">Shipping Optimizer</h1>
-          <p className="text-[#475569] mt-1 text-sm">Sharp.js engine — real image processing + coverage-based shipping calculation</p>
+          <p className="text-[#475569] mt-1 text-sm">AI-powered image processing + coverage-based shipping optimization</p>
         </div>
         <div className="flex items-center gap-3">
           <span className="bg-[#f1f5f9] text-[#475569] px-3 py-1.5 rounded-lg text-xs font-bold"><i className="ti ti-coins text-[#F59E0B] mr-1"></i>{creditsRemaining} credits</span>
@@ -257,7 +257,7 @@ export default function OptimizerTool() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
                     { step: 1, icon: "ti-upload", color: "#7C3AED", bg: "#EDE9FE", title: "Upload Image", desc: "Upload your product photo as-is from your camera or studio" },
-                    { step: 2, icon: "ti-scan", color: "#F59E0B", bg: "#FEF3C7", title: "Sharp.js Analyzes", desc: "Engine generates 64 variants with different backgrounds & coverages" },
+                    { step: 2, icon: "ti-scan", color: "#F59E0B", bg: "#FEF3C7", title: "AI Analyzes", desc: "Engine generates 64 variants with different backgrounds & coverages" },
                     { step: 3, icon: "ti-chart-bar", color: "#10B981", bg: "#D1FAE5", title: "Score & Rank", desc: "Each variant scored by shipping impact — best pick auto-selected" },
                     { step: 4, icon: "ti-download", color: "#0A0A14", bg: "#f1f5f9", title: "Download & Save", desc: "Download optimized image, upload to marketplace, save ₹25-40/order" },
                   ].map(s => (

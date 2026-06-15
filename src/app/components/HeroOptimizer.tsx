@@ -58,7 +58,7 @@ export default function HeroOptimizer() {
 
     const steps = [
       { p: 15, t: "Analyzing image bounding box..." },
-      { p: 35, t: "Running Sharp.js engine..." },
+      { p: 35, t: "Running optimization engine..." },
       { p: 55, t: "Generating 64 variants..." },
       { p: 75, t: "Scoring by shipping impact..." },
       { p: 90, t: "Selecting best results..." },

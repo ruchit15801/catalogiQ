@@ -22,7 +22,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <title>{appName} - AI Catalog Optimization & Shipping Cost Reduction</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
       </head>
       <body>
@@ -144,9 +144,9 @@ export default function RootLayout({
                 <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-[#64748b] text-sm">
                     <div>&copy; 2026 {appName}. All rights reserved.</div>
                     <div className="flex items-center gap-2">
-                        <span>Made with AI</span>
+                        <span>Trusted by 12,000+ sellers</span>
                         <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] animate-pulse"></span>
-                        <span>Systems Normal</span>
+                        <span>All Systems Operational</span>
                     </div>
                 </div>
               </div>

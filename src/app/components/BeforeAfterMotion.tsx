@@ -109,7 +109,7 @@ export default function BeforeAfterMotion() {
                   <i className="ti ti-coin-rupee"></i> Slab: {slabAfter.label} • ₹{slabAfter.cost}
                 </motion.div>
                 <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.4, type: "spring" }} className="absolute bottom-4 left-4 bg-black/80 text-white text-[10px] font-mono px-3 py-1.5 rounded-lg z-30">
-                  MozJPEG • EXIF stripped • 142KB
+                  Optimized • Compressed • 142KB
                 </motion.div>
               </>
             )}
