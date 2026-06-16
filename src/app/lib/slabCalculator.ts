@@ -120,26 +120,53 @@ export function scoreVariant(
   chargeableWeight: number,
   firstSlabMax: number = 500
 ): number {
-  // Slab score: being in lowest slab is highest priority
   const slabScore = chargeableWeight <= firstSlabMax ? 100
     : chargeableWeight <= firstSlabMax * 2 ? 70
     : chargeableWeight <= firstSlabMax * 4 ? 40 : 15;
-
-  // Coverage: lower = better (smaller perceived product)
   const covScore = coverage <= 50 ? 100 : coverage <= 55 ? 90
     : coverage <= 58 ? 80 : coverage <= 62 ? 65 : 45;
-
-  // File size: smaller = better
   const sizeScore = fileSizeKB <= 150 ? 100 : fileSizeKB <= 200 ? 85
     : fileSizeKB <= 300 ? 65 : 40;
-
-  // Quality: lower = smaller file but still acceptable
   const qualScore = quality <= 72 ? 95 : quality <= 78 ? 80 : 65;
-
   return Math.round(
-    slabScore * 0.50 +
-    covScore  * 0.25 +
-    sizeScore * 0.15 +
-    qualScore * 0.10
+    slabScore * 0.50 + covScore * 0.25 + sizeScore * 0.15 + qualScore * 0.10
   );
+}
+
+/**
+ * Full spec-defined shipping optimization score.
+ * Weights: Coverage 40%, BG 25%, Edge Confusion 15%, File Size 10%, Visual Contrast 10%
+ */
+export function scoreVariantFull(
+  coverageScore: number,
+  bgScore: number,
+  edgeConfusionScore: number,
+  fileSizeScore: number,
+  visualContrastScore: number
+): number {
+  return Math.round(
+    coverageScore       * 0.40 +
+    bgScore             * 0.25 +
+    edgeConfusionScore  * 0.15 +
+    fileSizeScore       * 0.10 +
+    visualContrastScore * 0.10
+  );
+}
+
+/**
+ * Predict shipping slab label from a variant
+ */
+export function predictShippingSlab(
+  shippingOptScore: number,
+  baselineSlab: string,
+  baselineRate: number
+): { predictedSlab: string; predictedCharge: number } {
+  if (shippingOptScore >= 80) {
+    return { predictedSlab: '0–500g', predictedCharge: Math.round(baselineRate * 0.60) };
+  } else if (shippingOptScore >= 65) {
+    return { predictedSlab: '500g–1kg', predictedCharge: Math.round(baselineRate * 0.75) };
+  } else if (shippingOptScore >= 50) {
+    return { predictedSlab: baselineSlab, predictedCharge: Math.round(baselineRate * 0.90) };
+  }
+  return { predictedSlab: baselineSlab, predictedCharge: baselineRate };
 }

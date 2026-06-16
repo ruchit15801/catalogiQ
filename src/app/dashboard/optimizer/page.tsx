@@ -7,15 +7,27 @@ import BeforeAfterMotion from "../../components/BeforeAfterMotion";
 interface VariantResult {
   rank: number;
   variantId: string;
+  variantName: string;
   imageBase64: string;
   coverage: number;
+  coverageScore: number;
   bgId: string;
+  bgName: string;
+  bgType: string;
+  bgComplexity: string;
   bgColor: string;
+  bgScore: number;
+  edgeConfusionScore: number;
+  fileSizeScore: number;
+  visualContrastScore: number;
+  shippingOptScore: number;
+  confidence: number;
   fileSizeKB: number;
   quality: number;
-  score: number;
   isBestPick: boolean;
   savingsPerOrder: number;
+  predictedSlab: string;
+  predictedCharge: number;
   shipping: {
     deadWeight: number;
     physicalVolWeight: number;
@@ -28,11 +40,24 @@ interface VariantResult {
   };
 }
 
+interface OriginalAnalysis {
+  coveragePct: number;
+  boundingBox: { x: number; y: number; width: number; height: number; aspectRatio: number };
+  bgComplexityScore: number;
+  edgeStrength: number;
+  visualContrastScore: number;
+  imageWidth: number;
+  imageHeight: number;
+}
+
 interface APIResponse {
   success: boolean;
   totalGenerated: number;
+  returnCount: number;
   marketplace: string;
   zone: string;
+  plan: string;
+  originalAnalysis: OriginalAnalysis;
   baseline: { slab: string; rate: number; chargeableWeight: number };
   results: VariantResult[];
   error?: string;
@@ -321,12 +346,38 @@ export default function OptimizerTool() {
 
           {/* Results */}
           {!isProcessing && apiResult && apiResult.results.length > 0 && (
-            <div className="animate-fade-up space-y-6">
+            <div className="animate-fade-up space-y-5">
+
+              {/* Original Image Analysis */}
+              {apiResult.originalAnalysis && (
+                <div className="bg-[#0A0A14] rounded-xl p-5 text-white">
+                  <div className="text-[10px] font-bold text-[#64748b] uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <i className="ti ti-scan text-[#7C3AED]"></i> Original Image Analysis
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 text-center">
+                    {[
+                      { label: "Coverage", val: `${apiResult.originalAnalysis.coveragePct}%`, color: "#A78BFA" },
+                      { label: "BG Complexity", val: `${apiResult.originalAnalysis.bgComplexityScore}/100`, color: "#F59E0B" },
+                      { label: "Edge Strength", val: `${apiResult.originalAnalysis.edgeStrength}/100`, color: "#EF4444" },
+                      { label: "Contrast", val: `${apiResult.originalAnalysis.visualContrastScore}/100`, color: "#10B981" },
+                      { label: "Width", val: `${apiResult.originalAnalysis.imageWidth}px`, color: "#64748b" },
+                      { label: "Height", val: `${apiResult.originalAnalysis.imageHeight}px`, color: "#64748b" },
+                    ].map(s => (
+                      <div key={s.label} className="bg-white/5 rounded-lg p-2">
+                        <div className="text-[10px] text-[#64748b] mb-1">{s.label}</div>
+                        <div className="font-black text-sm" style={{ color: s.color }}>{s.val}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="bg-white p-4 rounded-xl border border-[#e2e8f0] shadow-sm">
-                  <div className="text-xs font-bold text-[#64748b] uppercase mb-1">Variants Created</div>
+                  <div className="text-xs font-bold text-[#64748b] uppercase mb-1">Generated</div>
                   <div className="text-2xl font-black text-[#0A0A14]">{apiResult.totalGenerated}</div>
+                  <div className="text-[10px] text-[#94a3b8] mt-0.5">variants total</div>
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-[#e2e8f0] shadow-sm">
                   <div className="text-xs font-bold text-[#64748b] uppercase mb-1">Best Savings</div>
@@ -334,7 +385,7 @@ export default function OptimizerTool() {
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-[#e2e8f0] shadow-sm">
                   <div className="text-xs font-bold text-[#64748b] uppercase mb-1">Best Score</div>
-                  <div className="text-2xl font-black text-[#7C3AED]">{apiResult.results[0].score}/100</div>
+                  <div className="text-2xl font-black text-[#7C3AED]">{apiResult.results[0].shippingOptScore}/100</div>
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-[#e2e8f0] shadow-sm">
                   <div className="text-xs font-bold text-[#64748b] uppercase mb-1">100 Orders/mo</div>
@@ -342,39 +393,67 @@ export default function OptimizerTool() {
                 </div>
               </div>
 
-              {/* Baseline vs Best comparison */}
+              {/* Baseline vs Best */}
               <div className="bg-[#0A0A14] rounded-xl p-5 text-white grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div><div className="text-[10px] uppercase text-[#64748b] font-bold mb-1">Baseline Slab</div><div className="font-bold text-[#EF4444]">{apiResult.baseline.slab} • ₹{apiResult.baseline.rate}</div></div>
-                <div><div className="text-[10px] uppercase text-[#64748b] font-bold mb-1">Optimized Slab</div><div className="font-bold text-[#10B981]">{apiResult.results[0].shipping.slab} • ₹{apiResult.results[0].shipping.selectedZoneRate}</div></div>
+                <div><div className="text-[10px] uppercase text-[#64748b] font-bold mb-1">Predicted Slab</div><div className="font-bold text-[#10B981]">{apiResult.results[0].predictedSlab} • ₹{apiResult.results[0].predictedCharge}</div></div>
                 <div><div className="text-[10px] uppercase text-[#64748b] font-bold mb-1">Coverage</div><div className="font-bold">{apiResult.results[0].coverage}%</div></div>
-                <div><div className="text-[10px] uppercase text-[#64748b] font-bold mb-1">File Size</div><div className="font-bold">{apiResult.results[0].fileSizeKB}KB</div></div>
+                <div><div className="text-[10px] uppercase text-[#64748b] font-bold mb-1">Confidence</div><div className="font-bold text-[#A78BFA]">{apiResult.results[0].confidence}%</div></div>
               </div>
 
               {/* Variants Grid */}
-              <div className="bg-white border border-[#e2e8f0] rounded-xl p-5 md:p-6 shadow-sm">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-lg font-bold text-[#0f172a]">Top {apiResult.results.length} Variants</h2>
+              <div className="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-sm">
+                <div className="flex justify-between items-center mb-5">
+                  <h2 className="text-lg font-bold text-[#0f172a]">
+                    Top {apiResult.results.length} Ranked Variants
+                    <span className="ml-2 text-xs font-normal text-[#64748b]">({apiResult.plan === 'paid' ? 'Paid Plan' : 'Free Plan'})</span>
+                  </h2>
                   <span className="text-xs font-semibold text-[#64748b]">{apiResult.totalGenerated} total generated</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                   {apiResult.results.map((v) => (
                     <div key={v.variantId} className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden hover:shadow-xl hover:border-[#A78BFA] transition-all duration-300 group relative">
+                      {/* Image */}
                       <div className="h-52 relative flex items-center justify-center overflow-hidden" style={{ backgroundColor: v.bgColor }}>
                         {v.isBestPick && <div className="absolute top-3 left-3 bg-[#7C3AED] text-white text-xs px-3 py-1 rounded-lg font-bold z-10"><i className="ti ti-star-filled mr-1"></i>Best Pick</div>}
-                        <div className="absolute top-3 right-3 bg-black/70 text-white text-[10px] px-2 py-1 rounded-lg z-10 font-bold">{v.score}/100</div>
-                        {v.imageBase64 ? <img src={v.imageBase64} alt={v.variantId} className="w-full h-full object-contain transition-transform group-hover:scale-105" /> : <i className="ti ti-photo text-4xl text-white/50"></i>}
+                        <div className="absolute top-3 right-3 bg-black/70 text-white text-[10px] px-2 py-1 rounded-lg z-10 font-bold">#{v.rank} • {v.shippingOptScore}/100</div>
+                        {v.imageBase64 ? <img src={v.imageBase64} alt={v.variantName} className="w-full h-full object-contain transition-transform group-hover:scale-105" /> : <i className="ti ti-photo text-4xl text-white/50"></i>}
                         <div className="absolute bottom-3 left-3 bg-black/70 text-white text-xs px-2 py-1 rounded-lg z-10 font-mono">{v.coverage}% • {v.fileSizeKB}KB</div>
+                        <div className="absolute bottom-3 right-3 bg-[#10B981]/90 text-white text-[10px] px-2 py-1 rounded-lg z-10 font-bold">{v.confidence}% conf.</div>
                       </div>
+
+                      {/* Info */}
                       <div className="p-4">
-                        <div className="font-bold text-[#0f172a] mb-2 text-sm capitalize">{v.bgId.replace(/-/g, ' ')}</div>
-                        <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                          <div className="p-2 bg-[#f8fafc] rounded-lg"><span className="text-[#64748b]">Slab:</span> <span className="font-bold">{v.shipping.slab}</span></div>
-                          <div className="p-2 bg-[#f8fafc] rounded-lg"><span className="text-[#64748b]">Rate:</span> <span className="font-bold">₹{v.shipping.selectedZoneRate}</span></div>
-                          <div className="p-2 bg-[#f8fafc] rounded-lg"><span className="text-[#64748b]">Wt:</span> <span className="font-bold">{v.shipping.chargeableWeight}g</span></div>
-                          <div className={`p-2 rounded-lg ${v.savingsPerOrder > 0 ? 'bg-[#D1FAE5]' : 'bg-[#f8fafc]'}`}><span className="text-[#64748b]">Save:</span> <span className={`font-bold ${v.savingsPerOrder > 0 ? 'text-[#10B981]' : ''}`}>₹{v.savingsPerOrder}</span></div>
+                        <div className="font-bold text-[#0f172a] mb-1 text-sm">{v.variantName}</div>
+                        <div className="text-[10px] text-[#64748b] mb-3 capitalize">{v.bgComplexity} complexity • {v.bgType.replace(/_/g,' ')}</div>
+
+                        {/* Score bar */}
+                        <div className="mb-3">
+                          <div className="flex justify-between text-[10px] font-bold text-[#64748b] mb-1">
+                            <span>Shipping Opt. Score</span><span className="text-[#7C3AED]">{v.shippingOptScore}/100</span>
+                          </div>
+                          <div className="h-1.5 bg-[#f1f5f9] rounded-full overflow-hidden">
+                            <div className="h-full bg-gradient-to-r from-[#7C3AED] to-[#10B981] rounded-full" style={{ width: `${v.shippingOptScore}%` }}></div>
+                          </div>
                         </div>
+
+                        {/* Score breakdown */}
+                        <div className="grid grid-cols-3 gap-1 text-[10px] mb-3">
+                          <div className="bg-[#EDE9FE] rounded-lg p-1.5 text-center"><div className="text-[#7C3AED] font-black">{v.coverageScore}</div><div className="text-[#5B21B6]">Coverage</div></div>
+                          <div className="bg-[#FEF3C7] rounded-lg p-1.5 text-center"><div className="text-[#D97706] font-black">{v.bgScore}</div><div className="text-[#92400E]">BG Score</div></div>
+                          <div className="bg-[#D1FAE5] rounded-lg p-1.5 text-center"><div className="text-[#10B981] font-black">{v.edgeConfusionScore}</div><div className="text-[#065F46]">Edge</div></div>
+                        </div>
+
+                        {/* Shipping prediction */}
+                        <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                          <div className="p-2 bg-[#f8fafc] rounded-lg"><span className="text-[#64748b]">Predicted Slab: </span><span className="font-bold">{v.predictedSlab}</span></div>
+                          <div className="p-2 bg-[#f8fafc] rounded-lg"><span className="text-[#64748b]">Charge: </span><span className="font-bold">₹{v.predictedCharge}</span></div>
+                          <div className="p-2 bg-[#f8fafc] rounded-lg"><span className="text-[#64748b]">Wt: </span><span className="font-bold">{v.shipping.chargeableWeight}g</span></div>
+                          <div className={`p-2 rounded-lg ${v.savingsPerOrder > 0 ? 'bg-[#D1FAE5]' : 'bg-[#f8fafc]'}`}><span className="text-[#64748b]">Save: </span><span className={`font-bold ${v.savingsPerOrder > 0 ? 'text-[#10B981]' : ''}`}>₹{v.savingsPerOrder}</span></div>
+                        </div>
+
                         <button onClick={() => downloadVariant(v.imageBase64, v.variantId)} disabled={!v.imageBase64} className="w-full bg-[#f8fafc] border border-[#cbd5e1] hover:border-[#7C3AED] hover:text-[#7C3AED] text-[#0f172a] font-semibold py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-1 disabled:opacity-40">
-                          <i className="ti ti-download"></i> Download
+                          <i className="ti ti-download"></i> Download 512×512
                         </button>
                       </div>
                     </div>
@@ -382,15 +461,15 @@ export default function OptimizerTool() {
                 </div>
               </div>
 
-              {/* Shipping Breakdown Table */}
+              {/* Zone Rate Table */}
               <div className="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-sm overflow-x-auto">
-                <h3 className="text-sm font-bold text-[#0f172a] mb-4">All Zone Rates for Best Variant</h3>
+                <h3 className="text-sm font-bold text-[#0f172a] mb-4">Zone Rates — Best Variant</h3>
                 <table className="w-full text-sm">
                   <thead><tr className="bg-[#f8fafc] border-b border-[#e2e8f0]">
                     <th className="text-left px-4 py-3 text-xs font-bold text-[#64748b]">Zone</th>
                     <th className="text-center px-4 py-3 text-xs font-bold text-[#64748b]">Rate</th>
                     <th className="text-center px-4 py-3 text-xs font-bold text-[#64748b]">RTO</th>
-                    <th className="text-center px-4 py-3 text-xs font-bold text-[#64748b]">Total with RTO@15%</th>
+                    <th className="text-center px-4 py-3 text-xs font-bold text-[#64748b]">Total (RTO@15%)</th>
                   </tr></thead>
                   <tbody>
                     {(["local", "regional", "national"] as const).map((z) => {
@@ -410,8 +489,10 @@ export default function OptimizerTool() {
               </div>
             </div>
           )}
+
         </div>
       </div>
     </div>
   );
 }
+
