@@ -47,6 +47,57 @@ export interface AIGeneration {
   timestamp: number;
 }
 
+export interface PlanConfig {
+  // Free plan limits
+  free: {
+    variantsGenerated: number;    // how many variants to generate
+    resultsReturned: number;      // how many results to show
+    showImages: boolean;          // show real images or blur
+    showSavings: boolean;         // show real savings or lock
+    showDownload: boolean;        // show download button
+    showConfidence: boolean;      // show confidence %
+    shippingDisplay: 'real' | 'medium' | 'baseline'; // which cost to show
+    watermarkLabel: string;       // lock overlay text
+  };
+  // Paid plan limits
+  paid: {
+    variantsGenerated: number;
+    resultsReturned: number;
+    showImages: boolean;
+    showSavings: boolean;
+    showDownload: boolean;
+    showConfidence: boolean;
+    shippingDisplay: 'real' | 'medium' | 'baseline';
+  };
+  // Upsell text shown to free users
+  upsellTitle: string;
+  upsellDesc: string;
+}
+
+export const DEFAULT_PLAN_CONFIG: PlanConfig = {
+  free: {
+    variantsGenerated: 10,
+    resultsReturned: 3,
+    showImages: false,
+    showSavings: false,
+    showDownload: false,
+    showConfidence: false,
+    shippingDisplay: 'baseline',
+    watermarkLabel: 'Upgrade to view',
+  },
+  paid: {
+    variantsGenerated: 10,
+    resultsReturned: 5,
+    showImages: true,
+    showSavings: true,
+    showDownload: true,
+    showConfidence: true,
+    shippingDisplay: 'real',
+  },
+  upsellTitle: 'Upgrade to Paid to unlock optimized images & maximum savings',
+  upsellDesc: 'Free plan shows average shipping cost. Paid reveals exact lowest slab + download.',
+};
+
 export interface AppData {
   optimizations: OptimizationResult[];
   products: Product[];
@@ -54,6 +105,7 @@ export interface AppData {
   aiGenerations: AIGeneration[];
   totalCreditsUsed: number;
   planCredits: number;
+  planConfig: PlanConfig;
 }
 
 const defaultData: AppData = {
@@ -63,6 +115,7 @@ const defaultData: AppData = {
   aiGenerations: [],
   totalCreditsUsed: 0,
   planCredits: 100,
+  planConfig: DEFAULT_PLAN_CONFIG,
 };
 
 interface AppContextType {
@@ -76,6 +129,7 @@ interface AppContextType {
   addAIGeneration: (gen: AIGeneration) => void;
   useCredit: (amount?: number) => boolean;
   resetData: () => void;
+  updatePlanConfig: (config: PlanConfig) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -88,11 +142,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const stored = localStorage.getItem("catalogiq_data");
       if (stored) {
-        setData(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        // Deep merge: ensure new fields like planConfig always exist
+        setData({
+          ...defaultData,
+          ...parsed,
+          planConfig: {
+            ...DEFAULT_PLAN_CONFIG,
+            ...(parsed.planConfig ?? {}),
+            free: { ...DEFAULT_PLAN_CONFIG.free, ...(parsed.planConfig?.free ?? {}) },
+            paid: { ...DEFAULT_PLAN_CONFIG.paid, ...(parsed.planConfig?.paid ?? {}) },
+          },
+        });
       }
     } catch {}
     setLoaded(true);
   }, []);
+
 
   useEffect(() => {
     if (loaded) {
@@ -150,10 +216,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("catalogiq_data");
   };
 
+  const updatePlanConfig = (config: PlanConfig) => {
+    setData((prev) => ({ ...prev, planConfig: config }));
+  };
+
   if (!loaded) return null;
 
   return (
-    <AppContext.Provider value={{ data, addOptimization, addProduct, removeProduct, toggleProductOptimized, addProject, removeProject, addAIGeneration, useCredit, resetData }}>
+    <AppContext.Provider value={{ data, addOptimization, addProduct, removeProduct, toggleProductOptimized, addProject, removeProject, addAIGeneration, useCredit, resetData, updatePlanConfig }}>
       {children}
     </AppContext.Provider>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useAppData, genId, type Zone, MARKETPLACE_INFO } from "../../lib/store";
+import { useAppData, genId, type Zone, MARKETPLACE_INFO, DEFAULT_PLAN_CONFIG } from "../../lib/store";
 import BeforeAfterMotion from "../../components/BeforeAfterMotion";
 
 interface VariantResult {
@@ -65,6 +65,8 @@ interface APIResponse {
 
 export default function OptimizerTool() {
   const { addOptimization, data } = useAppData();
+  const planConfig = data.planConfig ?? DEFAULT_PLAN_CONFIG;
+
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -83,10 +85,16 @@ export default function OptimizerTool() {
   const [marketplace, setMarketplace] = useState("meesho");
   const [zone, setZone] = useState<Zone>("national");
   const [category, setCategory] = useState("default");
+  const [plan, setPlan] = useState<'free' | 'paid'>('free');
+
+  // Dynamic config derived from admin settings
+  const isPaid = plan === 'paid';
+  const activeCfg = isPaid ? planConfig.paid : planConfig.free;
+
 
   const creditsRemaining = data.planCredits - data.totalCreditsUsed;
 
-  // Live preview (simple volumetric — no image adjustments)
+  // Live preview (simple volumetric â€” no image adjustments)
   const liveVol = (length * width * height) / 5000 * 1000;
   const liveChargeable = Math.max(deadWeight, liveVol);
 
@@ -117,7 +125,7 @@ export default function OptimizerTool() {
     const steps = [
       { p: 10, text: "Analyzing bounding box...", log: `Dead: ${deadWeight}g | Vol: ${Math.round(liveVol)}g` },
       { p: 25, text: "Initializing optimization engine...", log: "Engine loaded" },
-      { p: 40, text: `Generating variants (8 BGs × 4 coverages × 2 qualities)...`, log: "64 variants queued" },
+      { p: 40, text: `Generating variants (8 BGs Ã— 4 coverages Ã— 2 qualities)...`, log: "64 variants queued" },
       { p: 60, text: "Compressing and optimizing files...", log: "Files optimized" },
       { p: 75, text: "Scoring variants by shipping impact...", log: "Score engine running" },
       { p: 90, text: "Selecting top 6 results...", log: "Ranking complete" },
@@ -141,6 +149,7 @@ export default function OptimizerTool() {
       formData.append("H", String(height));
       formData.append("marketplace", marketplace);
       formData.append("zone", zone);
+      formData.append("plan", plan);
 
       setStepText("Uploading to server...");
       setProgress(95);
@@ -156,7 +165,7 @@ export default function OptimizerTool() {
 
       setProgress(100);
       setStepText("Done!");
-      setLogs(prev => [...prev, `✓ ${json.totalGenerated} variants generated`, `✓ Top ${json.results.length} selected`]);
+      setLogs(prev => [...prev, `âœ“ ${json.totalGenerated} variants generated`, `âœ“ Top ${json.results.length} selected`]);
       setApiResult(json);
 
       // Save best to store
@@ -180,7 +189,7 @@ export default function OptimizerTool() {
 
       setTimeout(() => setIsProcessing(false), 500);
     } catch (err) {
-      setError("Network error — check if server is running");
+      setError("Network error â€” check if server is running");
       setIsProcessing(false);
     }
   };
@@ -273,7 +282,7 @@ export default function OptimizerTool() {
 
         {/* Main Content Area */}
         <div className="flex-1">
-          {/* Empty State — How It Works */}
+          {/* Empty State â€” How It Works */}
           {!isProcessing && !apiResult && !error && (
             <div className="space-y-6">
               {/* How It Works Steps */}
@@ -283,8 +292,8 @@ export default function OptimizerTool() {
                   {[
                     { step: 1, icon: "ti-upload", color: "#7C3AED", bg: "#EDE9FE", title: "Upload Image", desc: "Upload your product photo as-is from your camera or studio" },
                     { step: 2, icon: "ti-scan", color: "#F59E0B", bg: "#FEF3C7", title: "AI Analyzes", desc: "Engine generates 64 variants with different backgrounds & coverages" },
-                    { step: 3, icon: "ti-chart-bar", color: "#10B981", bg: "#D1FAE5", title: "Score & Rank", desc: "Each variant scored by shipping impact — best pick auto-selected" },
-                    { step: 4, icon: "ti-download", color: "#0A0A14", bg: "#f1f5f9", title: "Download & Save", desc: "Download optimized image, upload to marketplace, save ₹25-40/order" },
+                    { step: 3, icon: "ti-chart-bar", color: "#10B981", bg: "#D1FAE5", title: "Score & Rank", desc: "Each variant scored by shipping impact â€” best pick auto-selected" },
+                    { step: 4, icon: "ti-download", color: "#0A0A14", bg: "#f1f5f9", title: "Download & Save", desc: "Download optimized image, upload to marketplace, save â‚¹25-40/order" },
                   ].map(s => (
                     <div key={s.step} className="relative p-4 rounded-xl border border-[#e2e8f0] hover:shadow-lg hover:border-[#7C3AED]/30 transition-all duration-300 group">
                       <div className="absolute -top-3 -left-2 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black text-white shadow-md" style={{ backgroundColor: s.color }}>{s.step}</div>
@@ -298,7 +307,7 @@ export default function OptimizerTool() {
 
               {/* Before/After Animation */}
               <div className="bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm">
-                <h3 className="text-lg font-bold text-[#0f172a] mb-2 flex items-center gap-2"><i className="ti ti-movie text-[#7C3AED]"></i> Live Demo — Before vs After</h3>
+                <h3 className="text-lg font-bold text-[#0f172a] mb-2 flex items-center gap-2"><i className="ti ti-movie text-[#7C3AED]"></i> Live Demo â€” Before vs After</h3>
                 <p className="text-xs text-[#475569] mb-4">Watch the optimization happen in real-time. Hover to pause.</p>
                 <BeforeAfterMotion />
               </div>
@@ -311,7 +320,7 @@ export default function OptimizerTool() {
               </div>
               {data.optimizations.length > 0 && (
                 <div className="p-3 bg-[#f8fafc] rounded-xl border border-[#e2e8f0] text-sm text-[#475569] text-center">
-                  <i className="ti ti-history mr-1"></i>{data.optimizations.length} optimized • ₹{data.optimizations.reduce((s, o) => s + o.savings, 0)} total saved
+                  <i className="ti ti-history mr-1"></i>{data.optimizations.length} optimized â€¢ â‚¹{data.optimizations.reduce((s, o) => s + o.savings, 0)} total saved
                 </div>
               )}
             </div>
@@ -381,7 +390,7 @@ export default function OptimizerTool() {
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-[#e2e8f0] shadow-sm">
                   <div className="text-xs font-bold text-[#64748b] uppercase mb-1">Best Savings</div>
-                  <div className="text-2xl font-black text-[#10B981]">₹{apiResult.results[0].savingsPerOrder}/order</div>
+                  <div className="text-2xl font-black text-[#10B981]">â‚¹{apiResult.results[0].savingsPerOrder}/order</div>
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-[#e2e8f0] shadow-sm">
                   <div className="text-xs font-bold text-[#64748b] uppercase mb-1">Best Score</div>
@@ -389,81 +398,181 @@ export default function OptimizerTool() {
                 </div>
                 <div className="bg-white p-4 rounded-xl border border-[#e2e8f0] shadow-sm">
                   <div className="text-xs font-bold text-[#64748b] uppercase mb-1">100 Orders/mo</div>
-                  <div className="text-2xl font-black text-[#0A0A14]">₹{(apiResult.results[0].savingsPerOrder * 100).toLocaleString()}</div>
+                  <div className="text-2xl font-black text-[#0A0A14]">â‚¹{(apiResult.results[0].savingsPerOrder * 100).toLocaleString()}</div>
                 </div>
               </div>
 
               {/* Baseline vs Best */}
               <div className="bg-[#0A0A14] rounded-xl p-5 text-white grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div><div className="text-[10px] uppercase text-[#64748b] font-bold mb-1">Baseline Slab</div><div className="font-bold text-[#EF4444]">{apiResult.baseline.slab} • ₹{apiResult.baseline.rate}</div></div>
-                <div><div className="text-[10px] uppercase text-[#64748b] font-bold mb-1">Predicted Slab</div><div className="font-bold text-[#10B981]">{apiResult.results[0].predictedSlab} • ₹{apiResult.results[0].predictedCharge}</div></div>
+                <div><div className="text-[10px] uppercase text-[#64748b] font-bold mb-1">Baseline Slab</div><div className="font-bold text-[#EF4444]">{apiResult.baseline.slab} â€¢ â‚¹{apiResult.baseline.rate}</div></div>
+                <div><div className="text-[10px] uppercase text-[#64748b] font-bold mb-1">Predicted Slab</div><div className="font-bold text-[#10B981]">{apiResult.results[0].predictedSlab} â€¢ â‚¹{apiResult.results[0].predictedCharge}</div></div>
                 <div><div className="text-[10px] uppercase text-[#64748b] font-bold mb-1">Coverage</div><div className="font-bold">{apiResult.results[0].coverage}%</div></div>
                 <div><div className="text-[10px] uppercase text-[#64748b] font-bold mb-1">Confidence</div><div className="font-bold text-[#A78BFA]">{apiResult.results[0].confidence}%</div></div>
+              </div>
+
+              {/* Plan Toggle */}
+              <div className="flex items-center justify-between bg-white border border-[#e2e8f0] rounded-xl p-4 shadow-sm">
+                <div>
+                  <div className="font-bold text-[#0f172a] text-sm">Plan Mode</div>
+                  <div className="text-xs text-[#64748b] mt-0.5">
+                    {isPaid
+                      ? `Paid â€” ${activeCfg.resultsReturned} results, real images & savings`
+                      : `Free â€” ${activeCfg.resultsReturned} results, ${planConfig.free.showImages ? 'images visible' : 'images blurred'}`}
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 bg-[#f1f5f9] p-1 rounded-xl">
+                  <button
+                    onClick={() => setPlan('free')}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${!isPaid ? 'bg-white text-[#7C3AED] shadow-sm' : 'text-[#64748b] hover:text-[#0f172a]'}`}
+                  >
+                    <i className="ti ti-lock mr-1"></i>Free
+                  </button>
+                  <button
+                    onClick={() => setPlan('paid')}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${isPaid ? 'bg-[#7C3AED] text-white shadow-sm' : 'text-[#64748b] hover:text-[#0f172a]'}`}
+                  >
+                    <i className="ti ti-star mr-1"></i>Paid
+                  </button>
+                </div>
               </div>
 
               {/* Variants Grid */}
               <div className="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-sm">
                 <div className="flex justify-between items-center mb-5">
                   <h2 className="text-lg font-bold text-[#0f172a]">
-                    Top {apiResult.results.length} Ranked Variants
-                    <span className="ml-2 text-xs font-normal text-[#64748b]">({apiResult.plan === 'paid' ? 'Paid Plan' : 'Free Plan'})</span>
+                    Top {apiResult.results.slice(0, activeCfg.resultsReturned).length} Ranked Variants
+                    <span className={`ml-2 text-xs font-bold px-2 py-0.5 rounded-lg ${ isPaid ? 'bg-[#7C3AED] text-white' : 'bg-[#f1f5f9] text-[#64748b]'}`}>
+                      {isPaid ? 'â˜… Paid' : 'Free'}
+                    </span>
                   </h2>
-                  <span className="text-xs font-semibold text-[#64748b]">{apiResult.totalGenerated} total generated</span>
+                  <span className="text-xs font-semibold text-[#64748b]">{apiResult.totalGenerated} generated</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                  {apiResult.results.map((v) => (
-                    <div key={v.variantId} className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden hover:shadow-xl hover:border-[#A78BFA] transition-all duration-300 group relative">
-                      {/* Image */}
-                      <div className="h-52 relative flex items-center justify-center overflow-hidden" style={{ backgroundColor: v.bgColor }}>
-                        {v.isBestPick && <div className="absolute top-3 left-3 bg-[#7C3AED] text-white text-xs px-3 py-1 rounded-lg font-bold z-10"><i className="ti ti-star-filled mr-1"></i>Best Pick</div>}
-                        <div className="absolute top-3 right-3 bg-black/70 text-white text-[10px] px-2 py-1 rounded-lg z-10 font-bold">#{v.rank} • {v.shippingOptScore}/100</div>
-                        {v.imageBase64 ? <img src={v.imageBase64} alt={v.variantName} className="w-full h-full object-contain transition-transform group-hover:scale-105" /> : <i className="ti ti-photo text-4xl text-white/50"></i>}
-                        <div className="absolute bottom-3 left-3 bg-black/70 text-white text-xs px-2 py-1 rounded-lg z-10 font-mono">{v.coverage}% • {v.fileSizeKB}KB</div>
-                        <div className="absolute bottom-3 right-3 bg-[#10B981]/90 text-white text-[10px] px-2 py-1 rounded-lg z-10 font-bold">{v.confidence}% conf.</div>
-                      </div>
 
-                      {/* Info */}
-                      <div className="p-4">
-                        <div className="font-bold text-[#0f172a] mb-1 text-sm">{v.variantName}</div>
-                        <div className="text-[10px] text-[#64748b] mb-3 capitalize">{v.bgComplexity} complexity • {v.bgType.replace(/_/g,' ')}</div>
-
-                        {/* Score bar */}
-                        <div className="mb-3">
-                          <div className="flex justify-between text-[10px] font-bold text-[#64748b] mb-1">
-                            <span>Shipping Opt. Score</span><span className="text-[#7C3AED]">{v.shippingOptScore}/100</span>
-                          </div>
-                          <div className="h-1.5 bg-[#f1f5f9] rounded-full overflow-hidden">
-                            <div className="h-full bg-gradient-to-r from-[#7C3AED] to-[#10B981] rounded-full" style={{ width: `${v.shippingOptScore}%` }}></div>
-                          </div>
-                        </div>
-
-                        {/* Score breakdown */}
-                        <div className="grid grid-cols-3 gap-1 text-[10px] mb-3">
-                          <div className="bg-[#EDE9FE] rounded-lg p-1.5 text-center"><div className="text-[#7C3AED] font-black">{v.coverageScore}</div><div className="text-[#5B21B6]">Coverage</div></div>
-                          <div className="bg-[#FEF3C7] rounded-lg p-1.5 text-center"><div className="text-[#D97706] font-black">{v.bgScore}</div><div className="text-[#92400E]">BG Score</div></div>
-                          <div className="bg-[#D1FAE5] rounded-lg p-1.5 text-center"><div className="text-[#10B981] font-black">{v.edgeConfusionScore}</div><div className="text-[#065F46]">Edge</div></div>
-                        </div>
-
-                        {/* Shipping prediction */}
-                        <div className="grid grid-cols-2 gap-2 text-xs mb-3">
-                          <div className="p-2 bg-[#f8fafc] rounded-lg"><span className="text-[#64748b]">Predicted Slab: </span><span className="font-bold">{v.predictedSlab}</span></div>
-                          <div className="p-2 bg-[#f8fafc] rounded-lg"><span className="text-[#64748b]">Charge: </span><span className="font-bold">₹{v.predictedCharge}</span></div>
-                          <div className="p-2 bg-[#f8fafc] rounded-lg"><span className="text-[#64748b]">Wt: </span><span className="font-bold">{v.shipping.chargeableWeight}g</span></div>
-                          <div className={`p-2 rounded-lg ${v.savingsPerOrder > 0 ? 'bg-[#D1FAE5]' : 'bg-[#f8fafc]'}`}><span className="text-[#64748b]">Save: </span><span className={`font-bold ${v.savingsPerOrder > 0 ? 'text-[#10B981]' : ''}`}>₹{v.savingsPerOrder}</span></div>
-                        </div>
-
-                        <button onClick={() => downloadVariant(v.imageBase64, v.variantId)} disabled={!v.imageBase64} className="w-full bg-[#f8fafc] border border-[#cbd5e1] hover:border-[#7C3AED] hover:text-[#7C3AED] text-[#0f172a] font-semibold py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-1 disabled:opacity-40">
-                          <i className="ti ti-download"></i> Download 512×512
-                        </button>
-                      </div>
+                {/* Free plan upsell banner â€” from admin config */}
+                {!isPaid && (
+                  <div className="mb-5 p-4 rounded-xl border-2 border-dashed border-[#7C3AED]/40 bg-[#EDE9FE]/30 flex items-center gap-3">
+                    <i className="ti ti-lock text-2xl text-[#7C3AED]"></i>
+                    <div className="flex-1">
+                      <div className="font-bold text-[#5B21B6] text-sm">{planConfig.upsellTitle}</div>
+                      <div className="text-xs text-[#7C3AED] mt-0.5">{planConfig.upsellDesc}</div>
                     </div>
-                  ))}
+                    <button onClick={() => setPlan('paid')} className="shrink-0 bg-[#7C3AED] text-white text-xs font-bold px-3 py-2 rounded-lg hover:bg-[#5B21B6] transition-colors">
+                      Upgrade â†—
+                    </button>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                  {apiResult.results.slice(0, activeCfg.resultsReturned).map((v) => {
+                    // Shipping display based on admin config
+                    const disp = activeCfg.shippingDisplay;
+                    const displayCharge = disp === 'real' ? v.predictedCharge : disp === 'medium' ? Math.round((v.predictedCharge + apiResult.baseline.rate) / 2) : apiResult.baseline.rate;
+                    const displaySlab   = disp === 'real' ? v.predictedSlab : apiResult.baseline.slab;
+                    const displaySavings = activeCfg.showSavings ? v.savingsPerOrder : 0;
+                    const isAvgDisplay  = disp !== 'real';
+
+                    return (
+                      <div key={v.variantId} className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden hover:shadow-xl hover:border-[#A78BFA] transition-all duration-300 group relative">
+
+                        {/* Image â€” controlled by admin showImages flag */}
+                        <div className="h-52 relative flex items-center justify-center overflow-hidden" style={{ backgroundColor: v.bgColor }}>
+                          {v.isBestPick && <div className="absolute top-3 left-3 bg-[#7C3AED] text-white text-xs px-3 py-1 rounded-lg font-bold z-10"><i className="ti ti-star-filled mr-1"></i>Best Pick</div>}
+                          <div className="absolute top-3 right-3 bg-black/70 text-white text-[10px] px-2 py-1 rounded-lg z-10 font-bold">#{v.rank} â€¢ {v.shippingOptScore}/100</div>
+
+                          {v.imageBase64 ? (
+                            <img
+                              src={v.imageBase64}
+                              alt={v.variantName}
+                              className={`w-full h-full object-contain transition-transform group-hover:scale-105 ${!activeCfg.showImages ? 'blur-md scale-110' : ''}`}
+                            />
+                          ) : (
+                            <i className="ti ti-photo text-4xl text-white/50"></i>
+                          )}
+
+                          {/* Lock overlay if showImages is OFF */}
+                          {!activeCfg.showImages && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/30 z-10">
+                              <i className="ti ti-lock text-3xl text-white mb-1"></i>
+                              <span className="text-white text-xs font-bold">{planConfig.free.watermarkLabel}</span>
+                            </div>
+                          )}
+
+                          <div className="absolute bottom-3 left-3 bg-black/70 text-white text-xs px-2 py-1 rounded-lg z-10 font-mono">{v.coverage}% â€¢ {v.fileSizeKB}KB</div>
+                          {activeCfg.showConfidence && <div className="absolute bottom-3 right-3 bg-[#10B981]/90 text-white text-[10px] px-2 py-1 rounded-lg z-10 font-bold">{v.confidence}% conf.</div>}
+                        </div>
+
+                        {/* Info */}
+                        <div className="p-4">
+                          <div className="font-bold text-[#0f172a] mb-1 text-sm">{v.variantName}</div>
+                          <div className="text-[10px] text-[#64748b] mb-3 capitalize">{v.bgComplexity} complexity â€¢ {v.bgType.replace(/_/g,' ')}</div>
+
+                          {/* Score bar â€” always visible */}
+                          <div className="mb-3">
+                            <div className="flex justify-between text-[10px] font-bold text-[#64748b] mb-1">
+                              <span>Shipping Opt. Score</span><span className="text-[#7C3AED]">{v.shippingOptScore}/100</span>
+                            </div>
+                            <div className="h-1.5 bg-[#f1f5f9] rounded-full overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-[#7C3AED] to-[#10B981] rounded-full" style={{ width: `${v.shippingOptScore}%` }}></div>
+                            </div>
+                          </div>
+
+                          {/* Score breakdown â€” always visible */}
+                          <div className="grid grid-cols-3 gap-1 text-[10px] mb-3">
+                            <div className="bg-[#EDE9FE] rounded-lg p-1.5 text-center"><div className="text-[#7C3AED] font-black">{v.coverageScore}</div><div className="text-[#5B21B6]">Coverage</div></div>
+                            <div className="bg-[#FEF3C7] rounded-lg p-1.5 text-center"><div className="text-[#D97706] font-black">{v.bgScore}</div><div className="text-[#92400E]">BG Score</div></div>
+                            <div className="bg-[#D1FAE5] rounded-lg p-1.5 text-center"><div className="text-[#10B981] font-black">{v.edgeConfusionScore}</div><div className="text-[#065F46]">Edge</div></div>
+                          </div>
+
+                          {/* Shipping values â€” driven by admin shippingDisplay setting */}
+                          <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                            <div className="p-2 bg-[#f8fafc] rounded-lg">
+                              <span className="text-[#64748b]">Slab: </span>
+                              <span className="font-bold">{displaySlab}</span>
+                              {isAvgDisplay && <span className="text-[10px] text-[#F59E0B] ml-1">(avg)</span>}
+                            </div>
+                            <div className="p-2 bg-[#f8fafc] rounded-lg">
+                              <span className="text-[#64748b]">Charge: </span>
+                              <span className="font-bold">â‚¹{displayCharge}</span>
+                              {isAvgDisplay && <span className="text-[10px] text-[#F59E0B] ml-1">(avg)</span>}
+                            </div>
+                            <div className="p-2 bg-[#f8fafc] rounded-lg">
+                              <span className="text-[#64748b]">Wt: </span>
+                              <span className="font-bold">{v.shipping.chargeableWeight}g</span>
+                            </div>
+                            {activeCfg.showSavings ? (
+                              <div className={`p-2 rounded-lg ${displaySavings > 0 ? 'bg-[#D1FAE5]' : 'bg-[#f8fafc]'}`}>
+                                <span className="text-[#64748b]">Save: </span>
+                                <span className={`font-bold ${displaySavings > 0 ? 'text-[#10B981]' : ''}`}>â‚¹{displaySavings}/order</span>
+                              </div>
+                            ) : (
+                              <div className="p-2 bg-[#FEF3C7] rounded-lg flex items-center gap-1">
+                                <i className="ti ti-lock text-[#F59E0B] text-[10px]"></i>
+                                <span className="text-[10px] text-[#92400E] font-bold">Savings locked</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Download â€” driven by admin showDownload flag */}
+                          {activeCfg.showDownload ? (
+                            <button onClick={() => downloadVariant(v.imageBase64, v.variantId)} disabled={!v.imageBase64} className="w-full bg-[#7C3AED] hover:bg-[#5B21B6] text-white font-semibold py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-1 disabled:opacity-40">
+                              <i className="ti ti-download"></i> Download 512Ã—512
+                            </button>
+                          ) : (
+                            <button onClick={() => setPlan('paid')} className="w-full bg-[#f8fafc] border border-dashed border-[#7C3AED]/50 hover:bg-[#EDE9FE] text-[#7C3AED] font-semibold py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-1">
+                              <i className="ti ti-lock"></i> Unlock â€” Upgrade to Paid
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Zone Rate Table */}
+
               <div className="bg-white border border-[#e2e8f0] rounded-xl p-5 shadow-sm overflow-x-auto">
-                <h3 className="text-sm font-bold text-[#0f172a] mb-4">Zone Rates — Best Variant</h3>
+                <h3 className="text-sm font-bold text-[#0f172a] mb-4">Zone Rates â€” Best Variant</h3>
                 <table className="w-full text-sm">
                   <thead><tr className="bg-[#f8fafc] border-b border-[#e2e8f0]">
                     <th className="text-left px-4 py-3 text-xs font-bold text-[#64748b]">Zone</th>
@@ -478,9 +587,9 @@ export default function OptimizerTool() {
                       return (
                         <tr key={z} className={`border-b border-[#f1f5f9] ${z === zone ? 'bg-[#EDE9FE]/20' : ''}`}>
                           <td className="px-4 py-3 font-semibold capitalize">{z} {z === zone && <span className="text-[10px] text-[#7C3AED] font-bold ml-1">SELECTED</span>}</td>
-                          <td className="px-4 py-3 text-center font-bold">₹{r[z]}</td>
-                          <td className="px-4 py-3 text-center text-[#64748b]">₹{r.rto}</td>
-                          <td className="px-4 py-3 text-center font-bold text-[#EF4444]">₹{r[z] + rtoImpact}</td>
+                          <td className="px-4 py-3 text-center font-bold">â‚¹{r[z]}</td>
+                          <td className="px-4 py-3 text-center text-[#64748b]">â‚¹{r.rto}</td>
+                          <td className="px-4 py-3 text-center font-bold text-[#EF4444]">â‚¹{r[z] + rtoImpact}</td>
                         </tr>
                       );
                     })}

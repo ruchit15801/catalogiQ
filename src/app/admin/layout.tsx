@@ -21,6 +21,7 @@ const adminNavItems = [
   { section: "Configuration", items: [
     { href: "/admin/ai-config", icon: "ti-brain", label: "AI Configuration" },
     { href: "/admin/cms", icon: "ti-news", label: "Content (CMS)" },
+    { href: "/admin/plan-config", icon: "ti-adjustments", label: "Plan Configuration" },
   ]},
 ];
 
