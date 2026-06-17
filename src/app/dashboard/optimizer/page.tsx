@@ -364,8 +364,8 @@ export default function OptimizerTool() {
     const steps = [
       { p: 10, text: "Analyzing bounding box...", log: `Dead: ${deadWeight}g | Vol: ${Math.round(liveVol)}g` },
       { p: 25, text: "Initializing optimization engine...", log: "Engine loaded" },
-      { p: 40, text: `Generating variants (8 BGs × 4 coverages × 2 qualities)...`, log: "64 variants queued" },
-      { p: 60, text: "Compressing and optimizing files...", log: "Files optimized" },
+      { p: 40, text: `Generating 20 Premium Style variants...`, log: "20 variants queued" },
+      { p: 60, text: "Applying smart compressions...", log: "Files optimized" },
       { p: 75, text: "Scoring variants by shipping impact...", log: "Score engine running" },
       { p: 90, text: "Selecting top 6 results...", log: "Ranking complete" },
     ];

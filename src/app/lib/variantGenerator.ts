@@ -15,6 +15,13 @@ import {
   type StyleGroup,
 } from './promptEngine';
 
+const EMOJI_BUFFERS: Record<string, Buffer> = {
+  '😍': Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAAAsVBMVEVHcEzdLkT/zE3/zE3dLkT/zE3/zE3/zE3dLkT/zE3/zE3dLkT/zE3dLkT/zE3/zE3dLkT/zE3dLkTdLkTdLkT/zE3dLkTdLkTlUkbdLkTdLkRmRQCziSfZqjqMZxP1xEh5VgqDXg7isz9wTQWpgCKWbxifeB3su0O8kSvGmTDfOEX/zE3dLkT5rkv9wkzmVkbhQkXsc0jykUrufUnwh0njTEb7uEzqaUf3pUvoX0f0m0rE5zjeAAAAG3RSTlMAEFCA79+PIL+f74BgYL+vn0CvMEDPcM/PIN/+QM56AAACtUlEQVR4XqyT6Y6CMBSFTw2bAxgDBpdH6MbmOu//YGMFtCK5JRm/nzcnH6e9FJOk6yiK1mkSrHzR46+CpB9jLoUnO/hRWBx5P/YKzIFl8sVNDxp9s8YZg5tI2pSDqJQ2EZzE8p2287SjcYxpmLnHLM7BvJGIa+PRfDT2GPI4MxthtuZZI9rJMY8LP8oxu+hZ7qnKt5Kg7G6IYJv3fTxJURlRRUY81q+JxoiowLDEVP5fJFMAmSukZ4gyAPIbjSSw+Y5oQ4jordEi+j+iRXtXpO2fGs0eOEiaqxFdJc2he+4UXDzgdCp2v5BLJ7rMeCOF62TusxUwhKVr+a5nW4YwBJoINYOoIT6mAxh+hOJ0IboSV+IHABb3kDpRhehKJ3UPLAAsTUqX0yFhMf2xUpvAEoDfxVpiZcTi2i7gA+GQU5+lavFG/VlHDYEQySv4W00cjDhcZd1ggsBONnYrfh6Lztxu0wiLAKv3rKqr11Y/UIOpqtVfO3aw2jAMBAF0kLGFREnIwSdFshPHSdppIZBT/v/HStqmpLvYlktu7buuGNidm/jDAqV+fb6c7nJU0uly1rMSfJC/HfQfVPIhSiyoNRSmxwtUlLZdCG2/jlvqUVz3bQidHlV4otSGmzal9beU7gaUnmApNCGD2s5CXTuGDFHdGnAUQgYKDoCh0IVJHQUDAF4E7cOkvcjxuKrmHymq8q8shU2YkHRnH5ayt7mdLfFpRWEXRu0orPDFzVpuo7u/sbK4ZiRp08jKLL4VFJoUBqSGQoE7NaVd5n1Y4571lOImKCmSerEfDLXnJGKeqRkIBTUejn0XPnT98UCNBRTHAdsYtxzggLwkTedo7kE5QMFZCgwyntm8wQhbM1NtMa7wzOALTLKOk5xFjtWSo5Yr5LKV5wBfWcxiXEmldAa/YOX3ocWwd2I9te5q4VI/AAAAAElFTkSuQmCC', 'base64'),
+  '🤩': Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAAAwFBMVEVHcEzpXyjpXyj/zE3/zE3/zE3/zE3/zE3pXyj/zE3/zE3/zE3pXyj/zE3/zE3pXyj/zE3/zE3pXyjpXyjpXyj2nj3scC7pXyhmRQD///+MdEDZqjqheR15VwyziSezooD1xEiMZxPDli7PojVwTgnZ0b+Zg1X18++DaDCDXg7isz/su0PBtJfi3M+Wbxjs6N/Pxa/qZirpXyj/zE36sUT1mDvtcS78vkjzjzj+xUvxiDbvejHwgTT7uEb3oz/4qkGrhqadAAAAGHRSTlMAvISA349QIJ/vn68Yv2BAQM8wWOeXz3CFJ6ihAAADbklEQVR4XoyVWZLqMBRD7VRMAgTogoZeh+dMwP539WjHsYp+HtBfSuIYdM0NedelOuGhObJDLb3qAzs28E7VhWTUCiGqxdjsAgOqd5vFrV7BNs05i191hDRsKxPasoaQzgXPSdDF+e3XXma1/2pdMP3jKuGkZEFqyVWZipymEmhysUxJVCx65jlPH6NJkPAyeZBZcylOJ1Y9VsBd+cKUuq+cR4h1CdA1JPggrdKjcY2FVsyolZUDD7FrnLPTIsi4dGjsCYcbOHoX5UgtotIy5fTyf1J31SOPx62UNu7wUV87ME4/Ff0WST1QcFTftPo5vTBnMFIckNK0M6FFzkckClCOUyZR0hY4H5Ja0tEyp0yi3e/Ubgl3lH80JoI3v5/3Np7gwztn4PHz7N7v+FcmjurfQX0c83IaB2LLcX38UkM2dtTgLOZAfs/r2HGlhvRibd17J/fFFTgq9+M37l+PRfwmrO+i77ZA7YPxkTyxqGPi3q3dzBbBnXE41reBP83wV7shR1SAhhVQ6q89KfSOEo+EhfsPDi4W1giuDSYIWzJykGH64ADFrX/iAQMS5i8PoesZnIDqpzm8hO7z1AcMSHNoG9MFpySQcD8CaPyYE/0EQIPBPS0J/wUz/KvGXnZUBYIADFfSCmFONMOu5NLI/a4mrGYx7/9ax9Om1AJLW3fnW7gw5k+XHSANDxm/9KW1H/oHKfS5/yrUhRaBfdgvQiv+ixYR44POe6nR5/oQI2K6Z50VbFgowqs2jXQWGr35zHSUtngVsdAG1iyEb2ChNWzZZB+HtuAuQscyqRoUxVVSHhchF2A1H62pd2djOSRJYDTBRZIM5bg7q5t5aEU3fxLjWbV7oTIrowjd/B2+a7QmWd0sd82hByTJ0ShKuVMWaOTTjUePbDabUR0fZ45mLDYZPbL5vmVIgmExYD0ESDK+ZwY7nrV4EySnkSLjKQnwpmUHOLj4ZhctWunuQ9/XwwMfzkLG9564nnDhCvjWey5cqUksyR2i4I7PShqf0qzjg8GHI3mBoiKfhMEMZ2L2BxQc9hPjwIyauDDFB9Jw4tSjg99MFxXIFFE3zQhHyIVQpzEacappMWJHLsmoI1DvdRSIHM8+4znwhOvbdnwXnlNWi/IUvORa/OdfLth4/SIK7Lx8NWbJ4mWdLfn1oewvWmXuA4BdPx0AAAAASUVORK5CYII=', 'base64'),
+  '😘': Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAAAwFBMVEVHcEz/zE3/zE3/zE3/zE3/zE3/zE3/zE3/zE3/zE3/zE3/zE3/zE3dLkTdLkTdLkTdLkTdLkTiQkXdLkTdLkTdLkTrYD3/wkXdLkT/zE1mRQDdLkT/rDOziSf1xEjZqjrPojWfeB15VgqDXg7GmTBwTQWpgCKWbxifeB3su0OWbxj/tDr/xkj/vUHiQkPqX0D/rzX8njX/tjv/uj3ufUm8kSvmVkblTUL1hzfubD79wkz0m0r3pUvfNkPykUr5rEqPNarcAAAAGXRSTlMAUL9g34+AIJ/vr0DP7zDPvxiA32BQn5+fqGZe6gAAAtxJREFUeF69mOdy2zAMgGVb03bSdBfa23tkz7bv/1ZVKTY4hQcKyvX8/bR8n0EChGgYGpyJNTZBYo6tiWO8g5FrgoLpjoZZHMsDAs/ixzWbgpbpjBeNC724jKhsDxh4dl84c2Ay1wY18oCNp0mgDYMgl+fCQNw+T1xmue/7EctEexaZL2HERO/Pau2/8p59GknPbYWeCBi8yZ3T5j3+F05ep0kMHLxuPc1bT9FqsgXwmasbJD1L1LCwlYUV2p2JEwG5OMx8LTwl4Yl8SZ6lVA3M2oVpPeAjfhV1EzGToimKStCKUNWJaipTj8HXQBL5XTJAoN0lCwawSjNZskWMIkuIPBhImbcmFHl4ODqkzTfzFEjiNsF196C4qscXpLqghCnuVICp/F4lMxP3mVBsYs6QiHX66+5zx5goosKXFMBnoiYf6MZWLsWhLkHFMsYa0aqjWWCoan8YGyY3okWFDyrFZBrAEKGHNqGI3mxsekge0yI6/fghEqkiVkH+/WwZJYJo+fepKmIdkarTzOKoYojw0LJBEc3pRSb8F0w8IoP4dbi7e3zpHBELhvN7HwjunvDQYhvRNJ6iqSDU7C5/BpJ7wDbiQA+ZLM9M9oJNeAheucHG1r/bSVnn2Oyvw8sA2T8939y8AJjcK+hiLV+K2zB8CN6yf3aV15G+2yewC8PHQOXTgBdkIY78lRCpnOMrmyfaEKIfjcjhLy2FIyE6w2uNllg0tiWQEQV40aJJbte+8MRC9ECKDLensluNaFBXoagjhQ94GeVVdpP+cE/kv8FmV/a2ER2ogBrm3MqGI64NOTvHmzazsuG6Ceme8jSMmAUJ21DJ28VH/t9QFMHmTUifvxpdXFZltyFha7v4Yii4nMoWpSQXtz98w0URJqqyBcew4TI8Xn83CGxdZRcpSLabzdVutwWbO0DAys7XtytqgMAfaSQrYqRxiiELf+xzikEUfzR20mHd+8eHfwAwbKSgoKyy5QAAAABJRU5ErkJggg==', 'base64'),
+  '🥰': Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAAAwFBMVEVHcEzdLkT/zE3dLkT/zE3/zE3dLkT/zE3/zE3/zE3dLkT/zE3/zE3dLkTdLkTdLkTdLkT/zE3eMET/xkjdLkT/x0jdLkTdLkT/zE3dLkTdLkTiQEL/rDP/zE3/rDPdLkTtu0P/ykv/xEifeB3xfz/YqTn/tDrGmTDjQ0L/rzX/vkHisz/nUUHfNkOxhyZwTQX1xEj5kzaDXg7vbjv9pDTrYkB5Vgr/uUCWbxj7nDW8kSv5rktmRQCMZxP0m0rxjEmleXe5AAAAHXRSTlMAv1AQ74/vIN+fIL9ggFBjz4CfQI+vQDDP36/fn5xhyBoAAANOSURBVHhe7ZjXcuMgFECxrWa5xDVxsgvq7r23JP//VwvGUWLgonh3Z/ZlzxNzMzlzC8hCSINdNksOvuKUzLJNg24ll2tV0cfqEWWRLzpYwik2vAs1F7X4KlfQ5mIaWEGw23hXLGbkTtjUbGMlQTf2FDSgbIoYoEv6ngp1SnUD8oSEeEpUDbc7GGR4hyhvYJju90V1jLUioEeu6OFd1pW2UXmeQQ/c7IVKVAE8MANCxrLHKsD9gWs7yKIHYV44m4CmtBI9OWH/CHOHuiQVNzHsG1EHf4sdIev+jeeEO0CD9HSZ6caDcR0uDCZgprS6PvNgwwYnrzelHd+EPFZEV5qAAOwTWdCk+m9pqIk4bXwX4YCp3vEnbe6x8b0Mu8PgJsC7ZOI/xkQM9cjmSTIHYjIGeDhG+zNlPwJiEnlg9r3zlR4QE2E7wIE83ATEBBzlzEbnL4zAmDC3shxcMsGr778y0RKICZQVw++l/38x9YCYuAFKUowlMvPZyp+xNJQxkZLc6/mZMuXrKVsDMbHbWIKJfL702RqICSDl8HvCWooBovv5t6L/IufveBz5iGy3SZYg2W7lI2IqNvbe12n8vWJrm+JjhJ+l2XQOaeZTdmqn8mPEVpx+RjRSaUYRtahOv40Ux395vrA8ChX6x4+/SPk6/OGvMHG20TG5ZDZKjtGWRbhH+fDPY8AEwT1h8BbHJxyEp/f4LcwDP5DzCPZE1BPsyKLvUcbrjUeZVMGf7N5MrZn1+LvNYeJdmHicJyqyw3hM3as16YanDVvGhHT9SJ0O8Or+QkVV6yqP03fW/oKQoR8JWc2i6xgHissE9Xgp43Q1OVATxsk0bfty+nlyCCETSVSwPBVjQgYBDgKM/YTiY7rWXQGe0YOnhhWnuSetpPvoCyBa0YbfcZd4RDmdCGIgji2Hfk8UCjcAy0WoBYhiQnbau8Tiy+CqCIHN5vPXmeLJzU2roPb0L+OnZOdkUQ+jAVemZTgghx/UU3tCHBdOSE+w+4mqLw8opQJvRz11JFCTPBs+ey1GHom4lljYOruwjo1knizJE2akw8vSm54XmZ4iT0dvqhWabX1d7SaCcT863ihAn8Y4hmkjPRWLlVXN+FiXR9m4rVylkPH5EOYXFgQ0NJT3iZAAAAAASUVORK5CYII=', 'base64')
+};
+
 // ── Build background for a variant ──────────────────────────
 async function buildBgBuffer(
   fill: { r: number; g: number; b: number },
@@ -165,7 +172,11 @@ export async function generateVariants(
   try {
     const { removeBackground } = await import('@imgly/background-removal-node');
     const blob = new Blob([new Uint8Array(inputBuffer)], { type: 'image/jpeg' });
-    const bgRemBlob = await removeBackground(blob);
+    const { pathToFileURL } = await import('url');
+    const config = {
+      publicPath: pathToFileURL(path.resolve('./node_modules/@imgly/background-removal-node/dist/')).href + "/",
+    };
+    const bgRemBlob = await removeBackground(blob, config);
     const arrayBuffer = await bgRemBlob.arrayBuffer();
     transparentBuffer = Buffer.from(arrayBuffer);
     console.log('✓ Background removed successfully');
@@ -225,23 +236,23 @@ export async function generateVariants(
       // WARRANTY sticker — top left of canvas
       const warrantySvg = Buffer.from(`
         <svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS}" height="${CANVAS}">
-          <!-- Emoji stickers at product corners with slight shadow for premium glossy look -->
-          <style>
-            .emoji-shadow { filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5)); }
-          </style>
-          
-          <text class="emoji-shadow" x="${emojiX1}" y="${emojiY1 + emojiSize}" font-size="${emojiSize}" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${emojiSet.topLeft}</text>
-          <text class="emoji-shadow" x="${emojiX2}" y="${emojiY2 + emojiSize}" font-size="${emojiSize}" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${emojiSet.topRight}</text>
-          <text class="emoji-shadow" x="${emojiX3}" y="${emojiY3 + emojiSize}" font-size="${emojiSize}" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${emojiSet.bottomLeft}</text>
-          <text class="emoji-shadow" x="${emojiX4}" y="${emojiY4 + emojiSize}" font-size="${emojiSize}" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${emojiSet.bottomRight}</text>
         </svg>
       `);
+
+      const eTL = await sharp(EMOJI_BUFFERS[emojiSet.topLeft]).resize(emojiSize, emojiSize).png().toBuffer();
+      const eTR = await sharp(EMOJI_BUFFERS[emojiSet.topRight]).resize(emojiSize, emojiSize).png().toBuffer();
+      const eBL = await sharp(EMOJI_BUFFERS[emojiSet.bottomLeft]).resize(emojiSize, emojiSize).png().toBuffer();
+      const eBR = await sharp(EMOJI_BUFFERS[emojiSet.bottomRight]).resize(emojiSize, emojiSize).png().toBuffer();
 
       // 4. Composite: background → product → emojis
       const result = await sharp(bgBuffer)
         .composite([
           { input: resizedProduct, top: offset, left: offset },
           { input: warrantySvg,    top: 0,      left: 0 },
+          { input: eTL, top: emojiY1, left: emojiX1 },
+          { input: eTR, top: emojiY2, left: emojiX2 },
+          { input: eBL, top: emojiY3, left: emojiX3 },
+          { input: eBR, top: emojiY4, left: emojiX4 },
         ])
         .jpeg({ quality, mozjpeg: true })
         .toBuffer();

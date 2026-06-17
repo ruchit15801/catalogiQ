@@ -10,6 +10,7 @@ interface TrialResult {
     bgColor: string; fileSizeKB: number; shippingOptScore: number; savingsPerOrder: number;
     shipping: { slab: string; selectedZoneRate: number; chargeableWeight: number };
     isBestPick: boolean;
+    masterPrompt: string;
   }[];
 }
 
@@ -59,7 +60,7 @@ export default function HeroOptimizer() {
     const steps = [
       { p: 15, t: "Analyzing image bounding box..." },
       { p: 35, t: "Running optimization engine..." },
-      { p: 55, t: "Generating 64 variants..." },
+      { p: 55, t: "Generating 20 premium style variants..." },
       { p: 75, t: "Scoring by shipping impact..." },
       { p: 90, t: "Selecting best results..." },
     ];
@@ -169,7 +170,12 @@ export default function HeroOptimizer() {
                 </div>
                 <div className="p-3">
                   <div className="flex justify-between text-xs mb-2"><span className="text-[#64748b]">Slab: {v.shipping.slab}</span><span className="font-bold text-[#10B981]">Save ₹{v.savingsPerOrder}</span></div>
-                  <button onClick={() => downloadImg(v.imageBase64, v.variantId)} className="w-full bg-[#f8fafc] border border-[#cbd5e1] hover:border-[#7C3AED] text-[#0f172a] font-semibold py-2 rounded-lg text-xs transition-colors"><i className="ti ti-download mr-1"></i>Download</button>
+                  <div className="flex gap-2">
+                    <button onClick={() => downloadImg(v.imageBase64, v.variantId)} className="flex-1 bg-[#f8fafc] border border-[#cbd5e1] hover:border-[#7C3AED] text-[#0f172a] font-semibold py-2 rounded-lg text-xs transition-colors"><i className="ti ti-download mr-1"></i>Download</button>
+                    {v.masterPrompt && (
+                      <button onClick={() => alert("Master Prompt for GPT-4o Image Edit:\n\n" + v.masterPrompt)} className="bg-[#f1f5f9] border border-[#cbd5e1] hover:border-[#7C3AED] text-[#0f172a] font-semibold px-3 py-2 rounded-lg text-xs transition-colors" title="View Prompt"><i className="ti ti-code"></i></button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
