@@ -13,7 +13,7 @@ interface AdResult {
 }
 
 export default function AdGeneratorPage() {
-  const { data, useCredit } = useAppData();
+  const { data, useCredit, addAdGeneration } = useAppData();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [productName, setProductName] = useState("Premium Watch");
@@ -63,6 +63,7 @@ export default function AdGeneratorPage() {
       } else {
         setResults(json.results);
         useCredit(1); // Deduct 1 credit
+        addAdGeneration({ id: String(Date.now()), productName, timestamp: Date.now() });
       }
     } catch (e) {
       setError("Server error. Please try again.");

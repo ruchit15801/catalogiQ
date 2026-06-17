@@ -103,6 +103,7 @@ export interface AppData {
   products: Product[];
   projects: Project[];
   aiGenerations: AIGeneration[];
+  adGenerations: any[];
   totalCreditsUsed: number;
   planCredits: number;
   planConfig: PlanConfig;
@@ -113,6 +114,7 @@ const defaultData: AppData = {
   products: [],
   projects: [],
   aiGenerations: [],
+  adGenerations: [],
   totalCreditsUsed: 0,
   planCredits: 10,
   planConfig: DEFAULT_PLAN_CONFIG,
@@ -127,6 +129,7 @@ interface AppContextType {
   addProject: (project: Project) => void;
   removeProject: (id: string) => void;
   addAIGeneration: (gen: AIGeneration) => void;
+  addAdGeneration: (ad: any) => void;
   useCredit: (amount?: number) => boolean;
   resetData: () => void;
   updatePlanConfig: (config: PlanConfig) => void;
@@ -205,6 +208,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  const addAdGeneration = (ad: any) => {
+    setData((prev) => ({
+      ...prev,
+      adGenerations: [ad, ...(prev.adGenerations || [])]
+    }));
+  };
+
   const useCredit = (amount = 1): boolean => {
     if (data.totalCreditsUsed + amount > data.planCredits) return false;
     setData((prev) => ({ ...prev, totalCreditsUsed: prev.totalCreditsUsed + amount }));
@@ -223,7 +233,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   if (!loaded) return null;
 
   return (
-    <AppContext.Provider value={{ data, addOptimization, addProduct, removeProduct, toggleProductOptimized, addProject, removeProject, addAIGeneration, useCredit, resetData, updatePlanConfig }}>
+    <AppContext.Provider value={{ data, addOptimization, addProduct, removeProduct, toggleProductOptimized, addProject, removeProject, addAIGeneration, addAdGeneration, useCredit, resetData, updatePlanConfig }}>
       {children}
     </AppContext.Provider>
   );

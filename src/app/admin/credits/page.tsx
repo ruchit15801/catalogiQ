@@ -87,15 +87,20 @@ export default function AdminCredits() {
       {/* Optimization breakdown */}
       <div className="bg-[#0A0A14] rounded-xl p-5 text-white">
         <div className="text-[10px] font-bold text-[#64748b] uppercase tracking-widest mb-4">Credit Consumption by Type</div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <div className="bg-white/5 rounded-xl p-4">
             <div className="text-xs text-[#64748b] mb-1">Image Optimizations</div>
             <div className="text-2xl font-black text-[#10B981]">{data.optimizations.length}</div>
             <div className="text-xs text-[#64748b] mt-1">1 credit each</div>
           </div>
           <div className="bg-white/5 rounded-xl p-4">
-            <div className="text-xs text-[#64748b] mb-1">AI Generations</div>
+            <div className="text-xs text-[#64748b] mb-1">AI Copy & Content</div>
             <div className="text-2xl font-black text-[#A78BFA]">{data.aiGenerations.length}</div>
+            <div className="text-xs text-[#64748b] mt-1">1 credit each</div>
+          </div>
+          <div className="bg-white/5 rounded-xl p-4">
+            <div className="text-xs text-[#64748b] mb-1">Ad Generations</div>
+            <div className="text-2xl font-black text-[#F59E0B]">{data.adGenerations ? data.adGenerations.length : 0}</div>
             <div className="text-xs text-[#64748b] mt-1">1 credit each</div>
           </div>
         </div>

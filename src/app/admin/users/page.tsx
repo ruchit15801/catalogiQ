@@ -97,10 +97,11 @@ export default function AdminUsers() {
       {/* Platform Savings from Store */}
       <div className="bg-[#0A0A14] rounded-xl p-5 text-white">
         <div className="text-[10px] font-bold text-[#64748b] uppercase tracking-widest mb-3">Live Platform Metrics</div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <div><div className="text-xs text-[#64748b]">Total Optimizations</div><div className="text-2xl font-black text-[#A78BFA]">{totalOptimizations}</div></div>
-          <div><div className="text-xs text-[#64748b]">Total Savings Generated</div><div className="text-2xl font-black text-[#10B981]">₹{totalSavings.toLocaleString()}</div></div>
-          <div><div className="text-xs text-[#64748b]">AI Generations</div><div className="text-2xl font-black text-[#F59E0B]">{data.aiGenerations.length}</div></div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div><div className="text-xs text-[#64748b]">Total Optimizations</div><div className="text-2xl font-black text-[#10B981]">{totalOptimizations}</div></div>
+          <div><div className="text-xs text-[#64748b]">Total Savings Generated</div><div className="text-2xl font-black text-[#A78BFA]">₹{totalSavings.toLocaleString()}</div></div>
+          <div><div className="text-xs text-[#64748b]">AI Content Gens</div><div className="text-2xl font-black text-[#F59E0B]">{data.aiGenerations.length}</div></div>
+          <div><div className="text-xs text-[#64748b]">Ad Generations</div><div className="text-2xl font-black text-[#ec4899]">{data.adGenerations ? data.adGenerations.length : 0}</div></div>
         </div>
       </div>
     </div>

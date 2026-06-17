@@ -29,6 +29,7 @@ export default function AdminDashboard() {
   const recentActivity = [
     ...data.optimizations.map((o) => ({ type: "optimize" as const, label: `Image optimized: ${o.variantName}`, savings: o.savings, time: o.timestamp })),
     ...data.aiGenerations.map((g) => ({ type: "ai" as const, label: `AI ${g.type}: ${g.input.slice(0, 30)}`, savings: 0, time: g.timestamp })),
+    ...(data.adGenerations || []).map((ad) => ({ type: "ad" as const, label: `Ad Gen: ${ad.productName}`, savings: 0, time: ad.timestamp })),
     ...data.projects.map((p) => ({ type: "project" as const, label: `Project created: ${p.name}`, savings: 0, time: p.createdAt })),
   ].sort((a, b) => b.time - a.time).slice(0, 10);
 
@@ -40,7 +41,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Platform KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4 mb-8">
         <div className="bg-white p-4 md:p-5 rounded-xl border border-[#e2e8f0] shadow-sm">
           <div className="text-xs font-bold text-[#64748b] uppercase mb-2">Optimizations</div>
           <div className="text-2xl md:text-3xl font-black text-[#0A0A14]">{totalOptimizations}</div>
@@ -60,6 +61,10 @@ export default function AdminDashboard() {
         <div className="bg-white p-4 md:p-5 rounded-xl border border-[#e2e8f0] shadow-sm">
           <div className="text-xs font-bold text-[#64748b] uppercase mb-2">AI Gens</div>
           <div className="text-2xl md:text-3xl font-black text-[#7C3AED]">{totalAIGens}</div>
+        </div>
+        <div className="bg-white p-4 md:p-5 rounded-xl border border-[#e2e8f0] shadow-sm">
+          <div className="text-xs font-bold text-[#64748b] uppercase mb-2">Ad Gens</div>
+          <div className="text-2xl md:text-3xl font-black text-[#ec4899]">{data.adGenerations ? data.adGenerations.length : 0}</div>
         </div>
         <div className="bg-white p-4 md:p-5 rounded-xl border border-[#e2e8f0] shadow-sm">
           <div className="text-xs font-bold text-[#64748b] uppercase mb-2">Credits Used</div>
