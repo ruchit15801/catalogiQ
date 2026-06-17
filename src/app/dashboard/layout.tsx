@@ -12,6 +12,7 @@ const navItems = [
   ]},
   { section: "Tools", items: [
     { href: "/dashboard/optimizer", icon: "ti-wand", label: "Shipping Optimizer", badge: "Core" },
+    { href: "/dashboard/ad-generator", icon: "ti-ad", label: "Ads Generator", badge: "New" },
     { href: "/dashboard/catalog", icon: "ti-box", label: "Catalog Manager" },
     { href: "/dashboard/research", icon: "ti-search", label: "Research Center" },
     { href: "/dashboard/ai-studio", icon: "ti-robot", label: "AI Content Studio" },

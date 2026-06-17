@@ -38,6 +38,7 @@ export default function ToolsDirectory() {
       icon: "ti-photo",
       tools: [
         { name: "Background Generator", link: "/dashboard/optimizer" },
+        { name: "Ads Generator (AI)", link: "/dashboard/ad-generator", highlight: true },
         { name: "Image Compressor", link: "/dashboard/optimizer" },
         { name: "Bulk CSV Editor", link: "#" }
       ]
