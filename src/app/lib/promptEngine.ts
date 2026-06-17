@@ -1,15 +1,15 @@
 // ============================================================
-// PROMPT ENGINE — 20 background variants for shipping optimization
-// Style A (tight frame / cool tone) + Style B (full bleed / warm jewel tone)
-// Based on user's shipping optimization document
+// PROMPT ENGINE — Exact Reference Style Variant Generation
 // ============================================================
 
 export type StyleGroup = 'A' | 'B';
 
 export interface BackgroundVariant {
-  name: string;
-  desc: string;
+  id: string;
   style: StyleGroup;
+  name: string;
+  coverage: number;
+  emojiSetIndex: number;
   // For Sharp-based rendering
   fillColor: { r: number; g: number; b: number };
   gradColor: { r: number; g: number; b: number };
@@ -24,137 +24,94 @@ export interface EmojiSet {
   bottomRight: string;
 }
 
-// 10 Style A (cool tone, tight frame) + 10 Style B (warm jewel tone, full bleed)
-export const BACKGROUND_VARIANTS: BackgroundVariant[] = [
-  // ── Style A — cool tone, tight frame ──────────────────────────────────────
-  {
-    style: 'A', name: 'Navy Blue Floral', type: 'dark_floral', complexity: 'high',
-    desc: 'dense floral pattern using navy blue and white flowers (peonies/roses), dark moody tone, cool and detailed',
-    fillColor: { r: 15, g: 25, b: 70 }, gradColor: { r: 30, g: 60, b: 120 },
-  },
-  {
-    style: 'A', name: 'Slate Blue Floral', type: 'dark_floral', complexity: 'high',
-    desc: 'dense slate blue floral pattern with grey-white flowers, calm moody cool tone',
-    fillColor: { r: 55, g: 70, b: 100 }, gradColor: { r: 100, g: 115, b: 150 },
-  },
-  {
-    style: 'A', name: 'Teal Ocean Floral', type: 'floral', complexity: 'high',
-    desc: 'dense dark teal and turquoise floral pattern with white flowers, ocean-botanical cool mood',
-    fillColor: { r: 10, g: 70, b: 80 }, gradColor: { r: 20, g: 120, b: 130 },
-  },
-  {
-    style: 'A', name: 'Steel Blue Floral', type: 'floral', complexity: 'high',
-    desc: 'dense steel blue and silver floral pattern, crisp cool botanical tone',
-    fillColor: { r: 40, g: 80, b: 120 }, gradColor: { r: 90, g: 130, b: 180 },
-  },
-  {
-    style: 'A', name: 'Midnight Indigo Floral', type: 'dark_floral', complexity: 'high',
-    desc: 'dense midnight blue and indigo floral pattern with silver-white flowers, starry night cool mood',
-    fillColor: { r: 20, g: 10, b: 60 }, gradColor: { r: 50, g: 30, b: 100 },
-  },
-  {
-    style: 'A', name: 'Arctic Frost Floral', type: 'floral', complexity: 'high',
-    desc: 'dense pale icy blue and white floral pattern, frosty cool botanical tone',
-    fillColor: { r: 200, g: 225, b: 250 }, gradColor: { r: 220, g: 240, b: 255 },
-  },
-  {
-    style: 'A', name: 'Sapphire Cool Floral', type: 'dark_floral', complexity: 'high',
-    desc: 'dense sapphire blue floral pattern with white-grey flowers, jewel-toned cool mood',
-    fillColor: { r: 10, g: 40, b: 130 }, gradColor: { r: 30, g: 70, b: 180 },
-  },
-  {
-    style: 'A', name: 'Denim Blue Floral', type: 'floral', complexity: 'high',
-    desc: 'dense denim blue and powder blue floral pattern, soft cool botanical tone',
-    fillColor: { r: 80, g: 110, b: 160 }, gradColor: { r: 130, g: 160, b: 210 },
-  },
-  {
-    style: 'A', name: 'Moonlight Grey Floral', type: 'floral', complexity: 'high',
-    desc: 'dense moonlight grey-blue floral pattern with white blossoms, cool muted mood',
-    fillColor: { r: 100, g: 110, b: 130 }, gradColor: { r: 160, g: 170, b: 190 },
-  },
-  {
-    style: 'A', name: 'Glacier Teal Floral', type: 'floral', complexity: 'high',
-    desc: 'dense glacier teal and ice-white floral pattern, cool crisp botanical tone',
-    fillColor: { r: 30, g: 100, b: 110 }, gradColor: { r: 80, g: 180, b: 190 },
-  },
-
-  // ── Style B — warm jewel tone, full bleed ─────────────────────────────────
-  {
-    style: 'B', name: 'Deep Burgundy Floral', type: 'dark_floral', complexity: 'high',
-    desc: 'dense dark burgundy and maroon floral pattern (large roses/peonies), warm moody rich tone, full bleed',
-    fillColor: { r: 80, g: 10, b: 25 }, gradColor: { r: 130, g: 20, b: 40 },
-  },
-  {
-    style: 'B', name: 'Crimson Rose Floral', type: 'dark_floral', complexity: 'high',
-    desc: 'dense crimson red floral pattern with dark roses, bold warm romantic mood, full bleed',
-    fillColor: { r: 140, g: 15, b: 25 }, gradColor: { r: 90, g: 5, b: 15 },
-  },
-  {
-    style: 'B', name: 'Golden Amber Floral', type: 'floral', complexity: 'high',
-    desc: 'dense floral pattern with golden amber and brown tones (autumn florals), warm dark base, full bleed',
-    fillColor: { r: 100, g: 60, b: 10 }, gradColor: { r: 160, g: 100, b: 20 },
-  },
-  {
-    style: 'B', name: 'Wine Plum Floral', type: 'dark_floral', complexity: 'high',
-    desc: 'dense plum and wine colored floral pattern, deep warm moody botanical, full bleed',
-    fillColor: { r: 80, g: 20, b: 60 }, gradColor: { r: 120, g: 40, b: 90 },
-  },
-  {
-    style: 'B', name: 'Maroon Rose Floral', type: 'dark_floral', complexity: 'high',
-    desc: 'dense deep maroon floral pattern with large rose blooms, vintage warm romantic mood, full bleed',
-    fillColor: { r: 100, g: 15, b: 30 }, gradColor: { r: 70, g: 10, b: 20 },
-  },
-  {
-    style: 'B', name: 'Chocolate Brown Floral', type: 'floral', complexity: 'high',
-    desc: 'dense chocolate brown floral pattern with tan flowers, warm earthy botanical mood, full bleed',
-    fillColor: { r: 80, g: 45, b: 20 }, gradColor: { r: 120, g: 75, b: 40 },
-  },
-  {
-    style: 'B', name: 'Magenta Orchid Floral', type: 'floral', complexity: 'high',
-    desc: 'dense magenta and fuchsia floral pattern with orchid blooms, vibrant warm exotic mood, full bleed',
-    fillColor: { r: 160, g: 20, b: 100 }, gradColor: { r: 200, g: 50, b: 130 },
-  },
-  {
-    style: 'B', name: 'Mahogany Red Floral', type: 'dark_floral', complexity: 'high',
-    desc: 'dense mahogany and brick red floral pattern with dark leaves, rich warm vintage mood, full bleed',
-    fillColor: { r: 110, g: 30, b: 20 }, gradColor: { r: 80, g: 20, b: 10 },
-  },
-  {
-    style: 'B', name: 'Copper Rust Floral', type: 'floral', complexity: 'high',
-    desc: 'dense copper and rust orange floral pattern, warm autumnal botanical mood, full bleed',
-    fillColor: { r: 150, g: 70, b: 20 }, gradColor: { r: 100, g: 45, b: 10 },
-  },
-  {
-    style: 'B', name: 'Garnet Wine Floral', type: 'dark_floral', complexity: 'high',
-    desc: 'dense garnet and dark wine floral pattern with gold accents, jewel-toned warm mood, full bleed',
-    fillColor: { r: 100, g: 10, b: 30 }, gradColor: { r: 140, g: 20, b: 50 },
-  },
-];
-
-// Coverage cycles — Style A 58-62% (tight), Style B 64-69% (full bleed)
-export const COVERAGE_CYCLE_A = [58, 60, 59, 61, 58, 60, 62, 59, 61, 60];
-export const COVERAGE_CYCLE_B = [66, 68, 65, 67, 66, 64, 69, 65, 68, 67];
-
 export const EMOJI_SETS: EmojiSet[] = [
-  { topLeft: '😍', topRight: '🤩', bottomLeft: '😘', bottomRight: '🥰' },
-  { topLeft: '😍', topRight: '😂', bottomLeft: '😉', bottomRight: '❤️' },
-  { topLeft: '🤩', topRight: '🔥', bottomLeft: '💯', bottomRight: '😍' },
-  { topLeft: '💖', topRight: '🎉', bottomLeft: '👍', bottomRight: '😊' },
+  { topLeft: '😍', topRight: '🤩', bottomLeft: '😘', bottomRight: '🥰' }, // Set A
+  { topLeft: '🤩', topRight: '😍', bottomLeft: '🥰', bottomRight: '😘' }, // Set B
+  { topLeft: '🥰', topRight: '😘', bottomLeft: '😍', bottomRight: '🤩' }, // Set C
+  { topLeft: '😘', topRight: '🥰', bottomLeft: '🤩', bottomRight: '😍' }, // Set D
 ];
 
-export interface GeneratedPromptVariant {
-  variantIndex: number;
-  styleGroup: StyleGroup;
-  backgroundName: string;
-  coverage: number;
-  bg: BackgroundVariant;
-  emojis: EmojiSet;
-  prompt: string;
+// Exact variants defined in the reference document
+export const BACKGROUND_VARIANTS: BackgroundVariant[] = [
+  // Style A
+  { id: 'A1', style: 'A', name: 'Navy White Floral Garden', coverage: 58, emojiSetIndex: 0, type: 'dark_floral', complexity: 'high', fillColor: { r: 15, g: 25, b: 70 }, gradColor: { r: 30, g: 60, b: 120 } },
+  { id: 'A2', style: 'A', name: 'Royal Blue Rose Wallpaper', coverage: 60, emojiSetIndex: 1, type: 'dark_floral', complexity: 'high', fillColor: { r: 10, g: 30, b: 90 }, gradColor: { r: 20, g: 50, b: 140 } },
+  { id: 'A3', style: 'A', name: 'Sapphire Floral Pattern', coverage: 62, emojiSetIndex: 2, type: 'floral', complexity: 'high', fillColor: { r: 10, g: 40, b: 130 }, gradColor: { r: 30, g: 70, b: 180 } },
+  { id: 'A4', style: 'A', name: 'Blue Peony Wallpaper', coverage: 58, emojiSetIndex: 3, type: 'floral', complexity: 'high', fillColor: { r: 40, g: 80, b: 120 }, gradColor: { r: 90, g: 130, b: 180 } },
+  { id: 'A5', style: 'A', name: 'Indigo Floral Luxury', coverage: 60, emojiSetIndex: 0, type: 'dark_floral', complexity: 'high', fillColor: { r: 20, g: 10, b: 60 }, gradColor: { r: 50, g: 30, b: 100 } },
+  { id: 'A6', style: 'A', name: 'Ocean Bloom Wallpaper', coverage: 62, emojiSetIndex: 1, type: 'floral', complexity: 'high', fillColor: { r: 10, g: 70, b: 80 }, gradColor: { r: 20, g: 120, b: 130 } },
+  { id: 'A7', style: 'A', name: 'Teal Botanical Garden', coverage: 58, emojiSetIndex: 2, type: 'floral', complexity: 'high', fillColor: { r: 5, g: 50, b: 60 }, gradColor: { r: 10, g: 90, b: 100 } },
+  { id: 'A8', style: 'A', name: 'Frost Blue Floral', coverage: 60, emojiSetIndex: 3, type: 'floral', complexity: 'high', fillColor: { r: 180, g: 210, b: 240 }, gradColor: { r: 210, g: 230, b: 250 } },
+  { id: 'A9', style: 'A', name: 'Midnight Blue Floral', coverage: 61, emojiSetIndex: 0, type: 'dark_floral', complexity: 'high', fillColor: { r: 10, g: 15, b: 40 }, gradColor: { r: 20, g: 30, b: 80 } },
+  { id: 'A10', style: 'A', name: 'Cool Sapphire Garden', coverage: 62, emojiSetIndex: 1, type: 'dark_floral', complexity: 'high', fillColor: { r: 15, g: 35, b: 110 }, gradColor: { r: 35, g: 65, b: 160 } },
+
+  // Style B
+  { id: 'B1', style: 'B', name: 'Burgundy Rose Garden', coverage: 64, emojiSetIndex: 0, type: 'dark_floral', complexity: 'high', fillColor: { r: 80, g: 10, b: 25 }, gradColor: { r: 130, g: 20, b: 40 } },
+  { id: 'B2', style: 'B', name: 'Crimson Floral Luxury', coverage: 66, emojiSetIndex: 1, type: 'dark_floral', complexity: 'high', fillColor: { r: 140, g: 15, b: 25 }, gradColor: { r: 90, g: 5, b: 15 } },
+  { id: 'B3', style: 'B', name: 'Wine Red Floral Wallpaper', coverage: 68, emojiSetIndex: 2, type: 'dark_floral', complexity: 'high', fillColor: { r: 100, g: 10, b: 30 }, gradColor: { r: 140, g: 20, b: 50 } },
+  { id: 'B4', style: 'B', name: 'Plum Flower Garden', coverage: 65, emojiSetIndex: 3, type: 'dark_floral', complexity: 'high', fillColor: { r: 80, g: 20, b: 60 }, gradColor: { r: 120, g: 40, b: 90 } },
+  { id: 'B5', style: 'B', name: 'Mahogany Floral Luxury', coverage: 67, emojiSetIndex: 0, type: 'dark_floral', complexity: 'high', fillColor: { r: 110, g: 30, b: 20 }, gradColor: { r: 80, g: 20, b: 10 } },
+  { id: 'B6', style: 'B', name: 'Dark Ruby Floral', coverage: 64, emojiSetIndex: 1, type: 'dark_floral', complexity: 'high', fillColor: { r: 90, g: 10, b: 20 }, gradColor: { r: 140, g: 15, b: 30 } },
+  { id: 'B7', style: 'B', name: 'Purple Rose Garden', coverage: 66, emojiSetIndex: 2, type: 'floral', complexity: 'high', fillColor: { r: 130, g: 20, b: 100 }, gradColor: { r: 180, g: 40, b: 140 } },
+  { id: 'B8', style: 'B', name: 'Black Cherry Floral', coverage: 68, emojiSetIndex: 3, type: 'dark_floral', complexity: 'high', fillColor: { r: 50, g: 5, b: 15 }, gradColor: { r: 90, g: 10, b: 25 } },
+  { id: 'B9', style: 'B', name: 'Velvet Burgundy Wallpaper', coverage: 65, emojiSetIndex: 0, type: 'dark_floral', complexity: 'high', fillColor: { r: 120, g: 15, b: 35 }, gradColor: { r: 70, g: 10, b: 20 } },
+  { id: 'B10', style: 'B', name: 'Dark Jewel Tone Floral', coverage: 67, emojiSetIndex: 1, type: 'dark_floral', complexity: 'high', fillColor: { r: 60, g: 15, b: 50 }, gradColor: { r: 100, g: 25, b: 80 } },
+];
+
+export const GENERATION_ORDER = [
+  'A1', 'A2', 'A5', 'A8', 'B1', 'B2', 'B5', 'B9', 'A3', 'B3', 
+  'A4', 'B4', 'A6', 'B6', 'A7', 'B7', 'A9', 'B8', 'A10', 'B10'
+];
+
+export function generateMasterPrompt(productName: string, bg: BackgroundVariant, emojiSet: EmojiSet): string {
+  return `Transform the uploaded ${productName} image into the exact visual style of the reference.
+
+Keep product completely unchanged.
+
+Canvas:
+1024x1024
+
+Product Coverage:
+${bg.coverage}%
+
+Background:
+${bg.name}
+
+Create a dense luxury floral wallpaper background.
+
+Emoji Stickers:
+
+Attach directly on product surface.
+
+Top Left:
+${emojiSet.topLeft}
+
+Top Right:
+${emojiSet.topRight}
+
+Bottom Left:
+${emojiSet.bottomLeft}
+
+Bottom Right:
+${emojiSet.bottomRight}
+
+Requirements:
+
+* Glossy sticker appearance
+* Overlapping product edges
+* Physically attached look
+* Product centered
+* High detail floral wallpaper
+* Premium ecommerce aesthetic
+* Photorealistic
+* No watermark
+* No text
+* No logo modification
+* No product modification
+
+Output must match the reference composition exactly.`;
 }
 
-/**
- * Scoring for lowest shipping — as per the document's formula
- */
 export function scoreForLowestShipping(
   styleGroup: StyleGroup,
   coverage: number,
@@ -169,12 +126,4 @@ export function scoreForLowestShipping(
   const sizeScore = fileSizeKB <= 150 ? 100 : fileSizeKB <= 200 ? 85 : fileSizeKB <= 250 ? 65 : 40;
 
   return Math.round(covScore * 0.65 + sizeScore * 0.35);
-}
-
-/**
- * Get coverage for a given variant index
- */
-export function getCoverageForVariant(bg: BackgroundVariant, indexWithinStyle: number): number {
-  if (bg.style === 'A') return COVERAGE_CYCLE_A[indexWithinStyle % 10];
-  return COVERAGE_CYCLE_B[indexWithinStyle % 10];
 }

@@ -111,6 +111,7 @@ interface VariantResult {
     selectedZoneRate: number;
     inLowestSlab: boolean;
   };
+  masterPrompt?: string;
 }
 
 interface OriginalAnalysis {
@@ -211,18 +212,26 @@ function VariantCard({ v, isPaid, planConfig, zone, downloadVariant, setPlan, ac
             <span className={`font-bold ${v.savingsPerOrder > 0 ? 'text-[#10B981]' : ''}`}>₹{v.savingsPerOrder}/order</span>
           </div>
         </div>
-        {/* Download */}
-        {activeCfg.showDownload ? (
-          <button onClick={() => downloadVariant(v.imageBase64, v.variantId)} disabled={!v.imageBase64}
-            className="w-full bg-[#7C3AED] hover:bg-[#5B21B6] text-white font-semibold py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-1 disabled:opacity-40">
-            <i className="ti ti-download"></i> Download 512×512
-          </button>
-        ) : (
-          <button onClick={() => setPlan('paid')}
-            className="w-full bg-[#f8fafc] border border-dashed border-[#7C3AED]/50 hover:bg-[#EDE9FE] text-[#7C3AED] font-semibold py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-1">
-            <i className="ti ti-lock"></i> Unlock — Upgrade to Paid
-          </button>
-        )}
+        {/* Download & Prompt */}
+        <div className="flex gap-2">
+          {activeCfg.showDownload ? (
+            <button onClick={() => downloadVariant(v.imageBase64, v.variantId)} disabled={!v.imageBase64}
+              className="flex-1 bg-[#7C3AED] hover:bg-[#5B21B6] text-white font-semibold py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-1 disabled:opacity-40">
+              <i className="ti ti-download"></i> 1024×1024
+            </button>
+          ) : (
+            <button onClick={() => setPlan('paid')}
+              className="flex-1 bg-[#f8fafc] border border-dashed border-[#7C3AED]/50 hover:bg-[#EDE9FE] text-[#7C3AED] font-semibold py-2 rounded-lg text-sm transition-colors flex items-center justify-center gap-1">
+              <i className="ti ti-lock"></i> Upgrade
+            </button>
+          )}
+          {v.masterPrompt && (
+            <button onClick={() => alert("Master Prompt for GPT-4o Image Edit:\n\n" + v.masterPrompt)}
+              className="bg-[#f1f5f9] hover:bg-[#e2e8f0] text-[#475569] font-semibold px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-center" title="View Prompt">
+              <i className="ti ti-code"></i>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

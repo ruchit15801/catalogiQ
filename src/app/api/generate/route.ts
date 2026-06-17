@@ -135,6 +135,7 @@ export async function POST(req: NextRequest) {
           selectedZoneRate:       v.shipping.selectedZoneRate,
           inLowestSlab:           v.shipping.inLowestSlab,
         },
+        masterPrompt:       v.masterPrompt,
       };
     });
 

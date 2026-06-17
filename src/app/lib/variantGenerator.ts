@@ -8,10 +8,10 @@ import path from 'path';
 import fs from 'fs';
 import {
   BACKGROUND_VARIANTS,
-  COVERAGE_CYCLE_A,
-  COVERAGE_CYCLE_B,
+  GENERATION_ORDER,
   EMOJI_SETS,
   scoreForLowestShipping,
+  generateMasterPrompt,
   type StyleGroup,
 } from './promptEngine';
 
@@ -34,26 +34,26 @@ async function buildBgBuffer(
       <stop offset="0%" stop-color="rgb(${r1},${g1},${b1})"/>
       <stop offset="100%" stop-color="rgb(${r2},${g2},${b2})"/>
     </radialGradient>
-    <pattern id="florals" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+    <pattern id="florals" x="0" y="0" width="160" height="160" patternUnits="userSpaceOnUse">
       <!-- Flower 1 -->
-      <circle cx="40" cy="40" r="18" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
-      <circle cx="40" cy="40" r="8" fill="rgba(255,255,255,0.08)"/>
-      <ellipse cx="40" cy="22" rx="5" ry="10" fill="rgba(255,255,255,0.09)" transform="rotate(0,40,40)"/>
-      <ellipse cx="40" cy="22" rx="5" ry="10" fill="rgba(255,255,255,0.09)" transform="rotate(45,40,40)"/>
-      <ellipse cx="40" cy="22" rx="5" ry="10" fill="rgba(255,255,255,0.09)" transform="rotate(90,40,40)"/>
-      <ellipse cx="40" cy="22" rx="5" ry="10" fill="rgba(255,255,255,0.09)" transform="rotate(135,40,40)"/>
-      <ellipse cx="40" cy="22" rx="5" ry="10" fill="rgba(255,255,255,0.09)" transform="rotate(180,40,40)"/>
-      <ellipse cx="40" cy="22" rx="5" ry="10" fill="rgba(255,255,255,0.09)" transform="rotate(225,40,40)"/>
-      <ellipse cx="40" cy="22" rx="5" ry="10" fill="rgba(255,255,255,0.09)" transform="rotate(270,40,40)"/>
-      <ellipse cx="40" cy="22" rx="5" ry="10" fill="rgba(255,255,255,0.09)" transform="rotate(315,40,40)"/>
+      <circle cx="80" cy="80" r="36" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4"/>
+      <circle cx="80" cy="80" r="16" fill="rgba(255,255,255,0.08)"/>
+      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(0,80,80)"/>
+      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(45,80,80)"/>
+      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(90,80,80)"/>
+      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(135,80,80)"/>
+      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(180,80,80)"/>
+      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(225,80,80)"/>
+      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(270,80,80)"/>
+      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(315,80,80)"/>
       <!-- Small dots -->
-      <circle cx="10" cy="10" r="3" fill="rgba(255,255,255,0.07)"/>
-      <circle cx="70" cy="70" r="3" fill="rgba(255,255,255,0.07)"/>
-      <circle cx="10" cy="70" r="2" fill="rgba(255,255,255,0.05)"/>
-      <circle cx="70" cy="10" r="2" fill="rgba(255,255,255,0.05)"/>
+      <circle cx="20" cy="20" r="6" fill="rgba(255,255,255,0.07)"/>
+      <circle cx="140" cy="140" r="6" fill="rgba(255,255,255,0.07)"/>
+      <circle cx="20" cy="140" r="4" fill="rgba(255,255,255,0.05)"/>
+      <circle cx="140" cy="20" r="4" fill="rgba(255,255,255,0.05)"/>
       <!-- Leaf shapes -->
-      <path d="M5 40 Q20 25 35 40 Q20 55 5 40Z" fill="rgba(255,255,255,0.06)"/>
-      <path d="M45 0 Q60 15 45 30 Q30 15 45 0Z" fill="rgba(255,255,255,0.06)"/>
+      <path d="M10 80 Q40 50 70 80 Q40 110 10 80Z" fill="rgba(255,255,255,0.06)"/>
+      <path d="M90 0 Q120 30 90 60 Q60 30 90 0Z" fill="rgba(255,255,255,0.06)"/>
     </pattern>
   </defs>
   <rect width="${canvas}" height="${canvas}" fill="url(#bg)"/>
@@ -79,10 +79,10 @@ function scoreEdgeConfusion(bgType: string): number {
 
 function scoreFileSize(kb: number): number {
   if (kb <= 150) return 100;
-  if (kb <= 200) return 100;
+  if (kb <= 250) return 95;
   if (kb <= 350) return 85;
   if (kb <= 500) return 70;
-  if (kb <= 800) return 50;
+  if (kb <= 1000) return 50; // Under 1MB
   return 0;
 }
 
@@ -93,7 +93,7 @@ function scoreCoverage(coverage: number, style: StyleGroup): number {
     if (coverage <= 61) return 85;
     return 65;
   }
-  // Style B: 64-69% optimal (higher coverage but busy bg compensates)
+  // Style B: 64-68% optimal (higher coverage but busy bg compensates)
   if (coverage <= 65) return 95;
   if (coverage <= 67) return 80;
   return 60;
@@ -108,14 +108,14 @@ function scoreVisualContrast(bgType: string, coverage: number): number {
 function calcShippingOptScore(
   coverageScore: number,
   bgScore: number,
-  edgeScore: number,
+  edgeConfusionScore: number,
   fileSizeScore: number,
   contrastScore: number,
 ): number {
   return Math.round(
     coverageScore  * 0.40 +
     bgScore        * 0.25 +
-    edgeScore      * 0.15 +
+    edgeConfusionScore      * 0.15 +
     fileSizeScore  * 0.10 +
     contrastScore  * 0.10,
   );
@@ -145,17 +145,19 @@ export interface GeneratedVariant {
   visualContrastScore: number;
   shippingOptScore: number;
   confidence: number;
+  // Dynamic prompt
+  masterPrompt: string;
 }
 
 // ── Main export ──────────────────────────────────────────────
 export async function generateVariants(
   inputBuffer: Buffer,
-  _category: string,
+  category: string,
   outputDir: string,
 ): Promise<GeneratedVariant[]> {
   if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
-  const CANVAS = 512;
+  const CANVAS = 1024;
   const variants: GeneratedVariant[] = [];
 
   // Try background removal — fall back to original if it fails
@@ -171,25 +173,19 @@ export async function generateVariants(
     console.warn('Background removal skipped — using original:', (err as Error).message?.slice(0, 80));
   }
 
-  // Track A/B counters separately for coverage cycling
-  let styleACount = 0;
-  let styleBCount = 0;
+  // Iterate over GENERATION_ORDER as specified
+  for (const variantId of GENERATION_ORDER) {
+    const bg = BACKGROUND_VARIANTS.find(b => b.id === variantId);
+    if (!bg) continue;
 
-  for (const bg of BACKGROUND_VARIANTS) {
-    const styleIndex = bg.style === 'A' ? styleACount++ : styleBCount++;
-    const coverage = bg.style === 'A'
-      ? COVERAGE_CYCLE_A[styleIndex % COVERAGE_CYCLE_A.length]
-      : COVERAGE_CYCLE_B[styleIndex % COVERAGE_CYCLE_B.length];
-
-    const emojiSet = EMOJI_SETS[styleIndex % EMOJI_SETS.length];
-
-    // One quality per background (82 for crisp output, targets ~150-200KB)
-    const quality = 82;
+    const emojiSet = EMOJI_SETS[bg.emojiSetIndex];
+    const coverage = bg.coverage;
+    const quality = 82; // Ensures under 1MB for 1024x1024
 
     const productSize = Math.round(CANVAS * coverage / 100);
-    const variantId   = `${bg.name.toLowerCase().replace(/\s+/g, '-')}_s${bg.style}_c${coverage}`;
-    const filename    = `${variantId}.jpg`;
+    const filename    = `${variantId.toLowerCase()}_${bg.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
     const outPath     = path.join(outputDir, filename);
+    const productName = category || "Product";
 
     try {
       // 1. Resize product preserving transparency
@@ -209,38 +205,39 @@ export async function generateVariants(
         CANVAS,
       );
 
-      // 3. Build emoji stickers overlay — corners, physically on product
+      // 3. Build emoji stickers overlay — positioned on product, overlapping edges
       const offset = Math.round((CANVAS - productSize) / 2);
-      const emojiSize = bg.style === 'B' ? 52 : 44;  // Style B has bigger emojis
+      const emojiSize = bg.style === 'B' ? 104 : 88;  // Style B has bigger emojis
 
-      // Position emojis at product corners (not canvas corners)
-      const emojiX1 = offset + 5;
-      const emojiY1 = offset + 5;
-      const emojiX2 = offset + productSize - emojiSize - 5;
-      const emojiY2 = offset + 5;
-      const emojiX3 = offset + 5;
-      const emojiY3 = offset + productSize - emojiSize - 5;
-      const emojiX4 = offset + productSize - emojiSize - 5;
-      const emojiY4 = offset + productSize - emojiSize - 5;
+      // Position emojis directly overlapping the corners of the product boundary
+      const emojiX1 = offset - Math.round(emojiSize / 4);
+      const emojiY1 = offset - Math.round(emojiSize / 4);
+      
+      const emojiX2 = offset + productSize - emojiSize + Math.round(emojiSize / 4);
+      const emojiY2 = offset - Math.round(emojiSize / 4);
+      
+      const emojiX3 = offset - Math.round(emojiSize / 4);
+      const emojiY3 = offset + productSize - emojiSize + Math.round(emojiSize / 4);
+      
+      const emojiX4 = offset + productSize - emojiSize + Math.round(emojiSize / 4);
+      const emojiY4 = offset + productSize - emojiSize + Math.round(emojiSize / 4);
 
       // WARRANTY sticker — top left of canvas
       const warrantySvg = Buffer.from(`
         <svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS}" height="${CANVAS}">
-          <!-- Warranty badge -->
-          <circle cx="72" cy="72" r="52" fill="gold" stroke="#8B6914" stroke-width="3" opacity="0.95"/>
-          <circle cx="72" cy="72" r="44" fill="none" stroke="rgba(0,0,0,0.15)" stroke-width="1.5"/>
-          <text x="72" y="62" font-size="11" font-family="Arial,sans-serif" font-weight="800" fill="#2d1a00" text-anchor="middle" letter-spacing="0.5">WARRANTY</text>
-          <text x="72" y="82" font-size="22" font-family="Arial,sans-serif" font-weight="900" fill="#2d1a00" text-anchor="middle">3 YR</text>
-          <text x="72" y="98" font-size="10" font-family="Arial,sans-serif" font-weight="700" fill="#5a3500" text-anchor="middle">CERTIFIED</text>
-          <!-- Emoji stickers at product corners -->
-          <text x="${emojiX1}" y="${emojiY1 + emojiSize}" font-size="${emojiSize}" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${emojiSet.topLeft}</text>
-          <text x="${emojiX2}" y="${emojiY2 + emojiSize}" font-size="${emojiSize}" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${emojiSet.topRight}</text>
-          <text x="${emojiX3}" y="${emojiY3 + emojiSize}" font-size="${emojiSize}" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${emojiSet.bottomLeft}</text>
-          <text x="${emojiX4}" y="${emojiY4 + emojiSize}" font-size="${emojiSize}" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${emojiSet.bottomRight}</text>
+          <!-- Emoji stickers at product corners with slight shadow for premium glossy look -->
+          <style>
+            .emoji-shadow { filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.5)); }
+          </style>
+          
+          <text class="emoji-shadow" x="${emojiX1}" y="${emojiY1 + emojiSize}" font-size="${emojiSize}" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${emojiSet.topLeft}</text>
+          <text class="emoji-shadow" x="${emojiX2}" y="${emojiY2 + emojiSize}" font-size="${emojiSize}" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${emojiSet.topRight}</text>
+          <text class="emoji-shadow" x="${emojiX3}" y="${emojiY3 + emojiSize}" font-size="${emojiSize}" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${emojiSet.bottomLeft}</text>
+          <text class="emoji-shadow" x="${emojiX4}" y="${emojiY4 + emojiSize}" font-size="${emojiSize}" font-family="Apple Color Emoji,Segoe UI Emoji,sans-serif">${emojiSet.bottomRight}</text>
         </svg>
       `);
 
-      // 4. Composite: background → product → warranty+emojis
+      // 4. Composite: background → product → emojis
       const result = await sharp(bgBuffer)
         .composite([
           { input: resizedProduct, top: offset, left: offset },
@@ -251,8 +248,16 @@ export async function generateVariants(
 
       fs.writeFileSync(outPath, result);
       const fileSizeKB = Math.round(result.length / 1024);
+      
+      // Ensure file size is logged if > 1MB
+      if (fileSizeKB > 1024) {
+          console.warn(`Variant ${variantId} is larger than 1MB: ${fileSizeKB}KB`);
+      }
 
-      // 5. Compute all scores
+      // 5. Generate Master Prompt for this variant
+      const masterPrompt = generateMasterPrompt(productName, bg, emojiSet);
+
+      // 6. Compute all scores
       const coverageScore      = scoreCoverage(coverage, bg.style);
       const bgScore            = scoreBgComplexity(bg.complexity);
       const edgeConfusionScore = scoreEdgeConfusion(bg.type);
@@ -269,7 +274,7 @@ export async function generateVariants(
         variantName: bg.name,
         styleGroup: bg.style,
         coverage,
-        bgId:         bg.name.toLowerCase().replace(/\s+/g, '-'),
+        bgId:         bg.name.toLowerCase().replace(/\\s+/g, '-'),
         bgName:       bg.name,
         bgType:       bg.type,
         bgComplexity: bg.complexity,
@@ -285,6 +290,7 @@ export async function generateVariants(
         visualContrastScore,
         shippingOptScore,
         confidence,
+        masterPrompt,
       });
     } catch (err) {
       console.error(`Variant ${variantId} failed:`, err);
