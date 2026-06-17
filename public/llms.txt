@@ -1,0 +1,30 @@
+# CatalogIQ - The AI Operating System for Modern E-commerce Sellers
+
+CatalogIQ is an advanced SaaS platform built to help e-commerce sellers on marketplaces (Meesho, Amazon, Flipkart, Shopify) instantly increase their profit margins through AI automation.
+
+## Core Capabilities
+
+### 1. AI Shipping Cost Optimizer
+The flagship feature of CatalogIQ. It uses advanced computer vision to reduce the volumetric weight of marketplace product images. 
+- **How it works:** Marketplaces calculate shipping based on the "bounding box" of the product in the image. CatalogIQ's AI tightens this bounding box, reduces background noise, and dynamically positions the product to drop the item into a lower shipping slab.
+- **Benefit:** Saves sellers ₹20 to ₹40 per order by ensuring the lowest possible volumetric calculation.
+
+### 2. AI Ads Generator
+Converts simple product photos into luxury, high-end commercial advertisements.
+- Offers multiple studio-grade backgrounds (Dark Silk, Golden Hour, Ethereal Cloud).
+- Generates precise "GPT-4o Master Prompts" so sellers can perfectly instruct LLMs for further editing.
+
+### 3. AI Content Studio
+Auto-generates SEO, AEO, and GEO-optimized product titles, detailed descriptions, and keyword clusters designed specifically to rank #1 on marketplace search algorithms.
+
+### 4. Profit & Margin Calculator
+A 100% free tool that allows sellers to precisely calculate net profits, RTO (Return to Origin) losses, bank settlement amounts, and break-even points across Local, Zonal, and National shipping zones.
+
+## Target Audience
+Direct-to-consumer (D2C) brands, dropshippers, and high-volume marketplace sellers looking to automate margin expansion without changing their physical product.
+
+## Important Links
+- **Platform:** https://catalogiq.com
+- **Seller Tools:** https://catalogiq.com/tools
+- **Pricing:** https://catalogiq.com/pricing
+- **Login/Dashboard:** https://catalogiq.com/dashboard

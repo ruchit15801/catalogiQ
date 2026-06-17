@@ -77,7 +77,7 @@ export interface PlanConfig {
 export const DEFAULT_PLAN_CONFIG: PlanConfig = {
   free: {
     variantsGenerated: 20,
-    resultsReturned: 5,
+    resultsReturned: 2,
     showImages: true,
     showSavings: true,
     showDownload: true,
@@ -95,7 +95,7 @@ export const DEFAULT_PLAN_CONFIG: PlanConfig = {
     shippingDisplay: 'real',
   },
   upsellTitle: 'Upgrade to Paid — unlock all 20 optimized variants',
-  upsellDesc: 'Free plan shows the 5 cheapest shipping variants. Paid reveals all 20, sorted from lowest to highest shipping cost.',
+  upsellDesc: 'Free plan shows the 2 cheapest shipping variants. Paid reveals all 20, sorted from lowest to highest shipping cost.',
 };
 
 export interface AppData {
@@ -114,7 +114,7 @@ const defaultData: AppData = {
   projects: [],
   aiGenerations: [],
   totalCreditsUsed: 0,
-  planCredits: 100,
+  planCredits: 10,
   planConfig: DEFAULT_PLAN_CONFIG,
 };
 

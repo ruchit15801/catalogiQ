@@ -13,7 +13,7 @@ interface AdResult {
 }
 
 export default function AdGeneratorPage() {
-  const { data } = useAppData();
+  const { data, useCredit } = useAppData();
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [productName, setProductName] = useState("Premium Watch");
@@ -26,6 +26,7 @@ export default function AdGeneratorPage() {
 
   const [isPaid, setIsPaid] = useState(false);
   const userPlan = isPaid ? "paid" : "free";
+  const creditsRemaining = data.planCredits - data.totalCreditsUsed;
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -40,6 +41,10 @@ export default function AdGeneratorPage() {
 
   const runGenerator = async () => {
     if (!file) return;
+    if (creditsRemaining <= 0) {
+      setError("No credits left! Please upgrade your plan.");
+      return;
+    }
     setProcessing(true);
     setError("");
     setResults([]);
@@ -57,6 +62,7 @@ export default function AdGeneratorPage() {
         setError(json.error || "Generation failed.");
       } else {
         setResults(json.results);
+        useCredit(1); // Deduct 1 credit
       }
     } catch (e) {
       setError("Server error. Please try again.");
