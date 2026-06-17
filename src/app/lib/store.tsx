@@ -76,26 +76,26 @@ export interface PlanConfig {
 
 export const DEFAULT_PLAN_CONFIG: PlanConfig = {
   free: {
-    variantsGenerated: 10,
-    resultsReturned: 3,
-    showImages: false,
-    showSavings: false,
-    showDownload: false,
-    showConfidence: false,
-    shippingDisplay: 'baseline',
-    watermarkLabel: 'Upgrade to view',
-  },
-  paid: {
-    variantsGenerated: 10,
+    variantsGenerated: 20,
     resultsReturned: 5,
     showImages: true,
     showSavings: true,
     showDownload: true,
     showConfidence: true,
     shippingDisplay: 'real',
+    watermarkLabel: 'Upgrade to view',
   },
-  upsellTitle: 'Upgrade to Paid to unlock optimized images & maximum savings',
-  upsellDesc: 'Free plan shows average shipping cost. Paid reveals exact lowest slab + download.',
+  paid: {
+    variantsGenerated: 20,
+    resultsReturned: 20,
+    showImages: true,
+    showSavings: true,
+    showDownload: true,
+    showConfidence: true,
+    shippingDisplay: 'real',
+  },
+  upsellTitle: 'Upgrade to Paid — unlock all 20 optimized variants',
+  upsellDesc: 'Free plan shows the 5 cheapest shipping variants. Paid reveals all 20, sorted from lowest to highest shipping cost.',
 };
 
 export interface AppData {

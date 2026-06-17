@@ -6,8 +6,6 @@ import fs   from 'fs';
 import path from 'path';
 import os   from 'os';
 
-export const config = { api: { bodyParser: false } };
-
 export async function POST(req: NextRequest) {
   try {
     const formData  = await req.formData();
@@ -31,26 +29,26 @@ export async function POST(req: NextRequest) {
     // ── Step 1: Analyze original image ─────────────────────────────────────
     const originalAnalysis = await analyzeImage(inputBuffer);
 
-    // ── Step 2: Baseline shipping (original ~85% coverage) ─────────────────
+    // ── Step 2: Baseline shipping (original image, unoptimized ~85% coverage) 
     const baselineShipping = calculateShipping(
       deadWeight, L, B, H, originalAnalysis.coveragePct || 85, 350, marketplace, zone
     );
 
-    // ── Step 3: Generate variants ───────────────────────────────────────────
+    // ── Step 3: Generate all 20 variants (Style A x10 + Style B x10) ─────────
     const tmpDir  = path.join(os.tmpdir(), `catalogiq_${Date.now()}`);
     const variants = await generateVariants(inputBuffer, category, tmpDir);
+    const totalGenerated = variants.length; // should be 20
 
-    // ── Step 4: Score + shipping for each variant ───────────────────────────
-    const totalGenerated = variants.length;
-
+    // ── Step 4: Score + shipping for each variant ──────────────────────────
     const scored = variants.map((v) => {
       const shipping = calculateShipping(
         deadWeight, L, B, H, v.coverage, v.fileSizeKB, marketplace, zone
       );
-      const savingsPerOrder = baselineShipping.selectedZoneRate - shipping.selectedZoneRate;
       const { predictedSlab, predictedCharge } = predictShippingSlab(
-        v.shippingOptScore, shipping.slab, shipping.selectedZoneRate
+        v.shippingOptScore, shipping.slab, shipping.selectedZoneRate, marketplace, zone
       );
+      // Savings vs baseline (original unoptimized image)
+      const savingsPerOrder = Math.max(0, baselineShipping.selectedZoneRate - predictedCharge);
 
       return {
         ...v,
@@ -61,14 +59,28 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    // ── Step 5: Sort by shipping opt score (spec) ───────────────────────────
-    scored.sort((a, b) => b.shippingOptScore - a.shippingOptScore);
+    // ── Step 5: Sort by predictedCharge ASCENDING (cheapest shipping first) ─
+    // Within same charge, sort by shippingOptScore descending (better image first)
+    scored.sort((a, b) => {
+      if (a.predictedCharge !== b.predictedCharge) {
+        return a.predictedCharge - b.predictedCharge; // cheapest first
+      }
+      return b.shippingOptScore - a.shippingOptScore; // then by score desc
+    });
 
-    // ── Step 6: Return top 3 (free) or top 5 (paid) ─────────────────────────
-    const returnCount = planTier === 'paid' ? 5 : 3;
+    // ── Step 6: Plans — Free=5 (lowest cost), Paid=20 (all) ─────────────────
+    // Free users get only the 5 cheapest (best deal) variants
+    // Paid users get all 20, grouped as: Lowest / Mid / Higher cost
+    const returnCount = planTier === 'paid' ? 20 : 5;
     const top = scored.slice(0, returnCount);
 
-    // ── Build response with base64 images ──────────────────────────────────
+    // ── Build response with base64 images ───────────────────────────────────
+    // Determine tier labels for UI display
+    const minCharge = scored[0]?.predictedCharge ?? 0;
+    const maxCharge = scored[scored.length - 1]?.predictedCharge ?? 0;
+    const midThreshold = minCharge + Math.round((maxCharge - minCharge) * 0.4);
+    const highThreshold = minCharge + Math.round((maxCharge - minCharge) * 0.7);
+
     const results = top.map((v, i) => {
       const imgPath = path.join(tmpDir, v.filename);
       let imageBase64 = '';
@@ -77,10 +89,16 @@ export async function POST(req: NextRequest) {
         imageBase64 = `data:image/jpeg;base64,${buf.toString('base64')}`;
       } catch {}
 
+      // Classify cost tier
+      const costTier: 'lowest' | 'medium' | 'higher' =
+        v.predictedCharge <= midThreshold ? 'lowest' :
+        v.predictedCharge <= highThreshold ? 'medium' : 'higher';
+
       return {
         rank:               i + 1,
         variantId:          v.id,
         variantName:        v.variantName,
+        styleGroup:         v.styleGroup,
         imageBase64,
         // Coverage
         coverage:           v.coverage,
@@ -102,6 +120,7 @@ export async function POST(req: NextRequest) {
         fileSizeKB:         v.fileSizeKB,
         quality:            v.quality,
         isBestPick:         i === 0,
+        costTier,
         // Shipping
         predictedSlab:      v.predictedSlab,
         predictedCharge:    v.predictedCharge,
@@ -119,7 +138,7 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    // Cleanup
+    // Cleanup temp files
     try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
 
     return NextResponse.json({
@@ -129,7 +148,6 @@ export async function POST(req: NextRequest) {
       marketplace,
       zone,
       plan: planTier,
-      // Original image analysis
       originalAnalysis: {
         coveragePct:        originalAnalysis.coveragePct,
         boundingBox:        originalAnalysis.boundingBox,
@@ -143,6 +161,12 @@ export async function POST(req: NextRequest) {
         slab:             baselineShipping.slab,
         rate:             baselineShipping.selectedZoneRate,
         chargeableWeight: baselineShipping.chargeableWeight,
+      },
+      // Cost range info for context
+      costRange: {
+        min: scored[0]?.predictedCharge ?? 0,
+        max: scored[scored.length - 1]?.predictedCharge ?? 0,
+        mid: midThreshold,
       },
       results,
     });

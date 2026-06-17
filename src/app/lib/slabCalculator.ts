@@ -154,19 +154,36 @@ export function scoreVariantFull(
 }
 
 /**
- * Predict shipping slab label from a variant
+ * Predict the best achievable shipping slab for a variant.
+ * Uses actual Meesho slab rates — not percentage reductions.
+ * High score images can drop product into 0-500g slab (₹75 national).
  */
 export function predictShippingSlab(
   shippingOptScore: number,
   baselineSlab: string,
-  baselineRate: number
+  baselineRate: number,
+  marketplace: string = 'meesho',
+  zone: Zone = 'national',
 ): { predictedSlab: string; predictedCharge: number } {
+  const slabs = SLAB_DB[marketplace] || SLAB_DB.meesho;
+  const firstSlab  = slabs[0];  // 0-500g
+  const secondSlab = slabs[1];  // 500g-1kg
+  const thirdSlab  = slabs[2];  // 1-1.5kg
+
   if (shippingOptScore >= 80) {
-    return { predictedSlab: '0–500g', predictedCharge: Math.round(baselineRate * 0.60) };
+    // Image optimized enough — drop to lowest slab (0-500g)
+    return { predictedSlab: firstSlab.label, predictedCharge: firstSlab[zone] };
   } else if (shippingOptScore >= 65) {
-    return { predictedSlab: '500g–1kg', predictedCharge: Math.round(baselineRate * 0.75) };
+    // Good optimization — drop to 2nd slab (500g-1kg)
+    return { predictedSlab: secondSlab.label, predictedCharge: secondSlab[zone] };
   } else if (shippingOptScore >= 50) {
-    return { predictedSlab: baselineSlab, predictedCharge: Math.round(baselineRate * 0.90) };
+    // Moderate — drop one slab below baseline if possible
+    const baselineSlabObj = slabs.find(s => s.label === baselineSlab) || slabs[slabs.length - 1];
+    const baselineIdx = slabs.indexOf(baselineSlabObj);
+    const targetSlab = slabs[Math.max(0, baselineIdx - 1)];
+    return { predictedSlab: targetSlab.label, predictedCharge: targetSlab[zone] };
   }
+  // Low score — stays on baseline
   return { predictedSlab: baselineSlab, predictedCharge: baselineRate };
 }
+

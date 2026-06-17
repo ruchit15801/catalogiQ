@@ -7,7 +7,7 @@ interface TrialResult {
   baseline: { slab: string; rate: number };
   results: {
     rank: number; variantId: string; imageBase64: string; coverage: number;
-    bgColor: string; fileSizeKB: number; score: number; savingsPerOrder: number;
+    bgColor: string; fileSizeKB: number; shippingOptScore: number; savingsPerOrder: number;
     shipping: { slab: string; selectedZoneRate: number; chargeableWeight: number };
     isBestPick: boolean;
   }[];
@@ -152,7 +152,7 @@ export default function HeroOptimizer() {
           {/* Summary */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div className="bg-white p-4 rounded-xl border border-[#e2e8f0] shadow-sm text-center"><div className="text-xs font-bold text-[#64748b] uppercase mb-1">Generated</div><div className="text-2xl font-black text-[#0A0A14]">{result.totalGenerated}</div></div>
-            <div className="bg-white p-4 rounded-xl border border-[#e2e8f0] shadow-sm text-center"><div className="text-xs font-bold text-[#64748b] uppercase mb-1">Best Score</div><div className="text-2xl font-black text-[#7C3AED]">{result.results[0]?.score}/100</div></div>
+            <div className="bg-white p-4 rounded-xl border border-[#e2e8f0] shadow-sm text-center"><div className="text-xs font-bold text-[#64748b] uppercase mb-1">Best Score</div><div className="text-2xl font-black text-[#7C3AED]">{result.results[0]?.shippingOptScore}/100</div></div>
             <div className="bg-white p-4 rounded-xl border border-[#e2e8f0] shadow-sm text-center"><div className="text-xs font-bold text-[#64748b] uppercase mb-1">Savings</div><div className="text-2xl font-black text-[#10B981]">₹{result.results[0]?.savingsPerOrder}/order</div></div>
             <div className="bg-white p-4 rounded-xl border border-[#e2e8f0] shadow-sm text-center"><div className="text-xs font-bold text-[#64748b] uppercase mb-1">100 Orders</div><div className="text-2xl font-black text-[#0A0A14]">₹{((result.results[0]?.savingsPerOrder || 0) * 100).toLocaleString()}</div></div>
           </div>
@@ -162,9 +162,10 @@ export default function HeroOptimizer() {
               <div key={v.variantId} className="bg-white border border-[#e2e8f0] rounded-xl overflow-hidden shadow-sm hover:shadow-xl transition-all group">
                 <div className="h-48 relative flex items-center justify-center" style={{ backgroundColor: v.bgColor }}>
                   {v.isBestPick && <div className="absolute top-2 left-2 bg-[#7C3AED] text-white text-[10px] px-2 py-1 rounded-lg font-bold z-10"><i className="ti ti-star-filled mr-0.5"></i>Best</div>}
-                  <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded-lg font-bold">{v.score}/100</div>
+                  <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded-lg font-bold">{v.shippingOptScore}/100</div>
                   {v.imageBase64 && <img src={v.imageBase64} alt="" className="w-full h-full object-contain group-hover:scale-105 transition-transform" />}
                   <div className="absolute bottom-2 left-2 bg-black/70 text-white text-[10px] px-2 py-1 rounded-lg font-mono">{v.coverage}% • {v.fileSizeKB}KB</div>
+                  <div className="absolute bottom-2 right-2 bg-[#10B981]/90 text-white text-[10px] px-2 py-1 rounded-lg font-bold shadow-md">₹{v.shipping.selectedZoneRate} Shipping</div>
                 </div>
                 <div className="p-3">
                   <div className="flex justify-between text-xs mb-2"><span className="text-[#64748b]">Slab: {v.shipping.slab}</span><span className="font-bold text-[#10B981]">Save ₹{v.savingsPerOrder}</span></div>
