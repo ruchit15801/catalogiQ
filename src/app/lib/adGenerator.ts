@@ -1,4 +1,5 @@
 import sharp from 'sharp';
+import { normalizeImageBuffer } from './imageUtils';
 
 const CANVAS = 1024;
 
@@ -81,7 +82,7 @@ export async function generateAdVariants(
   let transparentBuffer = inputBuffer;
   try {
     const { removeBackground } = await import('@imgly/background-removal-node');
-    const blob = new Blob([new Uint8Array(inputBuffer)], { type: 'image/jpeg' });
+    const blob = new Blob([new Uint8Array(inputBuffer)], { type: 'image/png' });
     const { pathToFileURL } = await import('url');
     const path = await import('path');
     const config = {
@@ -90,7 +91,7 @@ export async function generateAdVariants(
     const bgRemBlob = await removeBackground(blob, config);
     const arrayBuffer = await bgRemBlob.arrayBuffer();
     if (arrayBuffer.byteLength > 1024) {
-      transparentBuffer = Buffer.from(arrayBuffer);
+      transparentBuffer = await normalizeImageBuffer(Buffer.from(arrayBuffer));
     } else {
       throw new Error("Background removal returned corrupted blob");
     }
@@ -106,7 +107,7 @@ export async function generateAdVariants(
   const productSize = Math.round(CANVAS * 0.5);
   const offset = Math.round((CANVAS - productSize) / 2);
 
-  const resizedProduct = await sharp(transparentBuffer)
+  const resizedProduct = await sharp(transparentBuffer, { failOn: 'none' })
     .resize(productSize, productSize, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toBuffer();

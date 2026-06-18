@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateAdVariants } from '@/app/lib/adGenerator';
+import { normalizeImageFile } from '@/app/lib/imageUtils';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,8 +13,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'No image uploaded' }, { status: 400 });
     }
 
-    const arrayBuffer = await imageFile.arrayBuffer();
-    const inputBuffer = Buffer.from(arrayBuffer);
+    const inputBuffer = await normalizeImageFile(imageFile);
 
     // Call Ad Generator Engine
     const results = await generateAdVariants(

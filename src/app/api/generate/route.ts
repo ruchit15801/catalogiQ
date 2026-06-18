@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateVariants } from '@/app/lib/variantGenerator';
 import { analyzeImage }     from '@/app/lib/imageAnalyzer';
 import { calculateShipping, predictShippingSlab, type Zone } from '@/app/lib/slabCalculator';
+import { normalizeImageFile } from '@/app/lib/imageUtils';
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,8 +21,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'No image uploaded' }, { status: 400 });
     }
 
-    const arrayBuffer = await imageFile.arrayBuffer();
-    const inputBuffer = Buffer.from(arrayBuffer);
+    const inputBuffer = await normalizeImageFile(imageFile);
 
     // ── Step 1: Analyze original image ─────────────────────────────────────
     const originalAnalysis = await analyzeImage(inputBuffer);

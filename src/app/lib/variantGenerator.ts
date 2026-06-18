@@ -4,6 +4,7 @@
 // ============================================================
 
 import sharp from 'sharp';
+import { normalizeImageBuffer } from './imageUtils';
 import {
   BACKGROUND_VARIANTS,
   GENERATION_ORDER,
@@ -12,6 +13,57 @@ import {
   generateMasterPrompt,
   type StyleGroup,
 } from './promptEngine';
+
+async function makeFallbackSticker(size: number, bgColor: { r: number; g: number; b: number }): Promise<Buffer> {
+  const innerSize = Math.max(1, Math.round(size * 0.72));
+  const innerOffset = Math.round((size - innerSize) / 2);
+
+  const base = await sharp({
+    create: {
+      width: size,
+      height: size,
+      channels: 4,
+      background: { r: 255, g: 205, b: 77, alpha: 220 },
+    },
+  })
+    .png()
+    .toBuffer();
+
+  const inner = await sharp({
+    create: {
+      width: innerSize,
+      height: innerSize,
+      channels: 4,
+      background: { ...bgColor, alpha: 90 },
+    },
+  })
+    .blur(Math.max(1, Math.round(size * 0.08)))
+    .png()
+    .toBuffer();
+
+  return sharp(base)
+    .composite([{ input: inner, top: innerOffset, left: innerOffset, blend: 'over' }])
+    .png()
+    .toBuffer();
+}
+
+async function makeSticker(
+  emoji: string,
+  size: number,
+  bgColor: { r: number; g: number; b: number },
+): Promise<Buffer> {
+  try {
+    const input = EMOJI_BUFFERS[emoji];
+    if (!input) {
+      throw new Error(`Missing sticker asset for ${emoji}`);
+    }
+
+    return await sharp(input, { failOn: 'none' }).resize(size, size).png().toBuffer();
+  } catch (err) {
+    console.warn(`Sticker asset fallback for ${emoji}:`, (err as Error).message);
+    return makeFallbackSticker(size, bgColor);
+  }
+}
 
 const EMOJI_BUFFERS: Record<string, Buffer> = {
   '😍': Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAAAsVBMVEVHcEzdLkT/zE3/zE3dLkT/zE3/zE3/zE3dLkT/zE3/zE3dLkT/zE3dLkT/zE3/zE3dLkT/zE3dLkTdLkTdLkT/zE3dLkTdLkTlUkbdLkTdLkRmRQCziSfZqjqMZxP1xEh5VgqDXg7isz9wTQWpgCKWbxifeB3su0O8kSvGmTDfOEX/zE3dLkT5rkv9wkzmVkbhQkXsc0jykUrufUnwh0njTEb7uEzqaUf3pUvoX0f0m0rE5zjeAAAAG3RSTlMAEFCA79+PIL+f74BgYL+vn0CvMEDPcM/PIN/+QM56AAACtUlEQVR4XqyT6Y6CMBSFTw2bAxgDBpdH6MbmOu//YGMFtCK5JRm/nzcnH6e9FJOk6yiK1mkSrHzR46+CpB9jLoUnO/hRWBx5P/YKzIFl8sVNDxp9s8YZg5tI2pSDqJQ2EZzE8p2287SjcYxpmLnHLM7BvJGIa+PRfDT2GPI4MxthtuZZI9rJMY8LP8oxu+hZ7qnKt5Kg7G6IYJv3fTxJURlRRUY81q+JxoiowLDEVP5fJFMAmSukZ4gyAPIbjSSw+Y5oQ4jordEi+j+iRXtXpO2fGs0eOEiaqxFdJc2he+4UXDzgdCp2v5BLJ7rMeCOF62TusxUwhKVr+a5nW4YwBJoINYOoIT6mAxh+hOJ0IboSV+IHABb3kDpRhehKJ3UPLAAsTUqX0yFhMf2xUpvAEoDfxVpiZcTi2i7gA+GQU5+lavFG/VlHDYEQySv4W00cjDhcZd1ggsBONnYrfh6Lztxu0wiLAKv3rKqr11Y/UIOpqtVfO3aw2jAMBAF0kLGFREnIwSdFshPHSdppIZBT/v/HStqmpLvYlktu7buuGNidm/jDAqV+fb6c7nJU0uly1rMSfJC/HfQfVPIhSiyoNRSmxwtUlLZdCG2/jlvqUVz3bQidHlV4otSGmzal9beU7gaUnmApNCGD2s5CXTuGDFHdGnAUQgYKDoCh0IVJHQUDAF4E7cOkvcjxuKrmHymq8q8shU2YkHRnH5ayt7mdLfFpRWEXRu0orPDFzVpuo7u/sbK4ZiRp08jKLL4VFJoUBqSGQoE7NaVd5n1Y4571lOImKCmSerEfDLXnJGKeqRkIBTUejn0XPnT98UCNBRTHAdsYtxzggLwkTedo7kE5QMFZCgwyntm8wQhbM1NtMa7wzOALTLKOk5xFjtWSo5Yr5LKV5wBfWcxiXEmldAa/YOX3ocWwd2I9te5q4VI/AAAAAElFTkSuQmCC', 'base64'),
@@ -144,7 +196,7 @@ export async function generateVariants(
   let transparentBuffer = inputBuffer;
   try {
     const { removeBackground } = await import('@imgly/background-removal-node');
-    const blob = new Blob([new Uint8Array(inputBuffer)], { type: 'image/jpeg' });
+    const blob = new Blob([new Uint8Array(inputBuffer)], { type: 'image/png' });
     const { pathToFileURL } = await import('url');
     const path = await import('path');
     const config = {
@@ -153,7 +205,7 @@ export async function generateVariants(
     const bgRemBlob = await removeBackground(blob, config);
     const arrayBuffer = await bgRemBlob.arrayBuffer();
     if (arrayBuffer.byteLength > 1024) {
-      transparentBuffer = Buffer.from(arrayBuffer);
+      transparentBuffer = await normalizeImageBuffer(Buffer.from(arrayBuffer));
       console.log('✓ Background removed successfully');
     } else {
       throw new Error("Background removal returned corrupted blob");
@@ -177,7 +229,7 @@ export async function generateVariants(
 
     try {
       // 1. Resize product preserving transparency
-      const resizedProduct = await sharp(transparentBuffer)
+      const resizedProduct = await sharp(transparentBuffer, { failOn: 'none' })
         .resize(productSize, productSize, {
           fit: 'contain',
           background: { r: 0, g: 0, b: 0, alpha: 0 },
@@ -210,10 +262,10 @@ export async function generateVariants(
       const emojiX4 = offset + productSize - emojiSize + Math.round(emojiSize / 4);
       const emojiY4 = offset + productSize - emojiSize + Math.round(emojiSize / 4);
 
-      const eTL = await sharp(EMOJI_BUFFERS[emojiSet.topLeft]).resize(emojiSize, emojiSize).png().toBuffer();
-      const eTR = await sharp(EMOJI_BUFFERS[emojiSet.topRight]).resize(emojiSize, emojiSize).png().toBuffer();
-      const eBL = await sharp(EMOJI_BUFFERS[emojiSet.bottomLeft]).resize(emojiSize, emojiSize).png().toBuffer();
-      const eBR = await sharp(EMOJI_BUFFERS[emojiSet.bottomRight]).resize(emojiSize, emojiSize).png().toBuffer();
+      const eTL = await makeSticker(emojiSet.topLeft, emojiSize, bg.gradColor);
+      const eTR = await makeSticker(emojiSet.topRight, emojiSize, bg.gradColor);
+      const eBL = await makeSticker(emojiSet.bottomLeft, emojiSize, bg.gradColor);
+      const eBR = await makeSticker(emojiSet.bottomRight, emojiSize, bg.gradColor);
 
       // 4. Composite: background → product → emojis
       const result = await sharp(bgBuffer)

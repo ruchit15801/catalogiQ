@@ -25,14 +25,14 @@ export interface ImageAnalysis {
  * Returns all key metrics used by the scoring engine.
  */
 export async function analyzeImage(inputBuffer: Buffer): Promise<ImageAnalysis> {
-  const img = sharp(inputBuffer);
+  const img = sharp(inputBuffer, { failOn: 'none' });
   const meta = await img.metadata();
   const W = meta.width  || 512;
   const H = meta.height || 512;
 
   // ── 1. Flatten to RGBA raw pixels (resize to 256px for speed) ──
   const SAMPLE = 256;
-  const raw = await sharp(inputBuffer)
+  const raw = await sharp(inputBuffer, { failOn: 'none' })
     .resize(SAMPLE, SAMPLE, { fit: 'fill' })
     .ensureAlpha()
     .raw()
@@ -96,7 +96,7 @@ export async function analyzeImage(inputBuffer: Buffer): Promise<ImageAnalysis> 
   const bbH = Math.round((maxY > minY ? maxY - minY : H) * scaleY);
 
   // ── 5. Background complexity — std-dev of BG pixels ──
-  let bgR: number[] = [], bgG: number[] = [], bgB: number[] = [];
+  const bgR: number[] = [], bgG: number[] = [], bgB: number[] = [];
   for (let i = 0; i < total; i++) {
     const off = i * 4;
     const r = pixels[off], g = pixels[off + 1], b = pixels[off + 2], a = pixels[off + 3];

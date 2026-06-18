@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { normalizeImageFile } from '@/app/lib/imageUtils';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -15,10 +16,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'No image provided' }, { status: 400 });
     }
 
-    // Convert image to base64
-    const arrayBuffer = await imageFile.arrayBuffer();
-    const base64Image = Buffer.from(arrayBuffer).toString('base64');
-    const mimeType = imageFile.type || 'image/jpeg';
+    // Normalize before sending to OpenAI so live uploads with odd PNG headers still work.
+    const inputBuffer = await normalizeImageFile(imageFile);
+    const base64Image = inputBuffer.toString('base64');
+    const mimeType = 'image/png';
 
     let prompt = '';
     if (analysisType === 'product') {
