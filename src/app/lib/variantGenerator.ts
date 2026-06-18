@@ -4,7 +4,7 @@
 // ============================================================
 
 import sharp from 'sharp';
-import { normalizeImageBuffer } from './imageUtils';
+import { removeImageBackground } from './imageUtils';
 import {
   BACKGROUND_VARIANTS,
   GENERATION_ORDER,
@@ -192,27 +192,7 @@ export async function generateVariants(
   const variants: GeneratedVariant[] = [];
   let lastError: unknown;
 
-  // Try background removal — fall back to original if it fails
-  let transparentBuffer = inputBuffer;
-  try {
-    const { removeBackground } = await import('@imgly/background-removal-node');
-    const blob = new Blob([new Uint8Array(inputBuffer)], { type: 'image/png' });
-    const { pathToFileURL } = await import('url');
-    const path = await import('path');
-    const config = {
-      publicPath: pathToFileURL(path.resolve('./node_modules/@imgly/background-removal-node/dist/')).href + "/",
-    };
-    const bgRemBlob = await removeBackground(blob, config);
-    const arrayBuffer = await bgRemBlob.arrayBuffer();
-    if (arrayBuffer.byteLength > 1024) {
-      transparentBuffer = await normalizeImageBuffer(Buffer.from(arrayBuffer));
-      console.log('✓ Background removed successfully');
-    } else {
-      throw new Error("Background removal returned corrupted blob");
-    }
-  } catch (err) {
-    console.warn('Background removal skipped — using original:', (err as Error).message?.slice(0, 80));
-  }
+  const transparentBuffer = await removeImageBackground(inputBuffer);
 
   // Iterate over GENERATION_ORDER as specified
   for (const variantId of GENERATION_ORDER) {

@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { normalizeImageBuffer } from './imageUtils';
+import { removeImageBackground } from './imageUtils';
 
 const CANVAS = 1024;
 
@@ -78,26 +78,8 @@ export async function generateAdVariants(
   productName: string,
   plan: 'free' | 'paid'
 ) {
-  // 1. Remove background — skip on Vercel (will fallback to original)
-  let transparentBuffer = inputBuffer;
-  try {
-    const { removeBackground } = await import('@imgly/background-removal-node');
-    const blob = new Blob([new Uint8Array(inputBuffer)], { type: 'image/png' });
-    const { pathToFileURL } = await import('url');
-    const path = await import('path');
-    const config = {
-      publicPath: pathToFileURL(path.resolve('./node_modules/@imgly/background-removal-node/dist/')).href + "/",
-    };
-    const bgRemBlob = await removeBackground(blob, config);
-    const arrayBuffer = await bgRemBlob.arrayBuffer();
-    if (arrayBuffer.byteLength > 1024) {
-      transparentBuffer = await normalizeImageBuffer(Buffer.from(arrayBuffer));
-    } else {
-      throw new Error("Background removal returned corrupted blob");
-    }
-  } catch (err) {
-    console.warn('Background removal skipped for Ad:', err);
-  }
+  // 1. Always remove the product background before composing generated ads.
+  const transparentBuffer = await removeImageBackground(inputBuffer);
 
   // Determine variants to generate
   const targetVariants = plan === 'paid' ? AD_VARIANTS : AD_VARIANTS.filter(v => v.type === 'simple');
