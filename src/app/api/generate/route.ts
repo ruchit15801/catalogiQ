@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateVariants } from '@/app/lib/variantGenerator';
 import { analyzeImage }     from '@/app/lib/imageAnalyzer';
 import { calculateShipping, predictShippingSlab, type Zone } from '@/app/lib/slabCalculator';
-import fs   from 'fs';
-import path from 'path';
-import os   from 'os';
 
 export async function POST(req: NextRequest) {
   try {

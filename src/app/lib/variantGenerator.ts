@@ -4,8 +4,6 @@
 // ============================================================
 
 import sharp from 'sharp';
-import path from 'path';
-import fs from 'fs';
 import {
   BACKGROUND_VARIANTS,
   GENERATION_ORDER,
@@ -22,52 +20,28 @@ const EMOJI_BUFFERS: Record<string, Buffer> = {
   '🥰': Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAMAAABiM0N1AAAAwFBMVEVHcEzdLkT/zE3dLkT/zE3/zE3dLkT/zE3/zE3/zE3dLkT/zE3/zE3dLkTdLkTdLkTdLkT/zE3eMET/xkjdLkT/x0jdLkTdLkT/zE3dLkTdLkTiQEL/rDP/zE3/rDPdLkTtu0P/ykv/xEifeB3xfz/YqTn/tDrGmTDjQ0L/rzX/vkHisz/nUUHfNkOxhyZwTQX1xEj5kzaDXg7vbjv9pDTrYkB5Vgr/uUCWbxj7nDW8kSv5rktmRQCMZxP0m0rxjEmleXe5AAAAHXRSTlMAv1AQ74/vIN+fIL9ggFBjz4CfQI+vQDDP36/fn5xhyBoAAANOSURBVHhe7ZjXcuMgFECxrWa5xDVxsgvq7r23JP//VwvGUWLgonh3Z/ZlzxNzMzlzC8hCSINdNksOvuKUzLJNg24ll2tV0cfqEWWRLzpYwik2vAs1F7X4KlfQ5mIaWEGw23hXLGbkTtjUbGMlQTf2FDSgbIoYoEv6ngp1SnUD8oSEeEpUDbc7GGR4hyhvYJju90V1jLUioEeu6OFd1pW2UXmeQQ/c7IVKVAE8MANCxrLHKsD9gWs7yKIHYV44m4CmtBI9OWH/CHOHuiQVNzHsG1EHf4sdIev+jeeEO0CD9HSZ6caDcR0uDCZgprS6PvNgwwYnrzelHd+EPFZEV5qAAOwTWdCk+m9pqIk4bXwX4YCp3vEnbe6x8b0Mu8PgJsC7ZOI/xkQM9cjmSTIHYjIGeDhG+zNlPwJiEnlg9r3zlR4QE2E7wIE83ATEBBzlzEbnL4zAmDC3shxcMsGr778y0RKICZQVw++l/38x9YCYuAFKUowlMvPZyp+xNJQxkZLc6/mZMuXrKVsDMbHbWIKJfL702RqICSDl8HvCWooBovv5t6L/IufveBz5iGy3SZYg2W7lI2IqNvbe12n8vWJrm+JjhJ+l2XQOaeZTdmqn8mPEVpx+RjRSaUYRtahOv40Ux395vrA8ChX6x4+/SPk6/OGvMHG20TG5ZDZKjtGWRbhH+fDPY8AEwT1h8BbHJxyEp/f4LcwDP5DzCPZE1BPsyKLvUcbrjUeZVMGf7N5MrZn1+LvNYeJdmHicJyqyw3hM3as16YanDVvGhHT9SJ0O8Or+QkVV6yqP03fW/oKQoR8JWc2i6xgHissE9Xgp43Q1OVATxsk0bfty+nlyCCETSVSwPBVjQgYBDgKM/YTiY7rWXQGe0YOnhhWnuSetpPvoCyBa0YbfcZd4RDmdCGIgji2Hfk8UCjcAy0WoBYhiQnbau8Tiy+CqCIHN5vPXmeLJzU2roPb0L+OnZOdkUQ+jAVemZTgghx/UU3tCHBdOSE+w+4mqLw8opQJvRz11JFCTPBs+ey1GHom4lljYOruwjo1knizJE2akw8vSm54XmZ4iT0dvqhWabX1d7SaCcT863ihAn8Y4hmkjPRWLlVXN+FiXR9m4rVylkPH5EOYXFgQ0NJT3iZAAAAAASUVORK5CYII=', 'base64')
 };
 
-// ── Build background for a variant ──────────────────────────
+// ── Build background for a variant (pure sharp, no SVG — Vercel compatible) ──
 async function buildBgBuffer(
   fill: { r: number; g: number; b: number },
   grad: { r: number; g: number; b: number },
-  style: StyleGroup,
+  _style: StyleGroup,
   canvas: number,
 ): Promise<Buffer> {
-  // Build SVG gradient with floral/botanical pattern overlay
-  const r1 = fill.r; const g1 = fill.g; const b1 = fill.b;
-  const r2 = grad.r; const g2 = grad.g; const b2 = grad.b;
+  // Create base solid color background
+  const base = await sharp({
+    create: { width: canvas, height: canvas, channels: 4, background: { ...fill, alpha: 255 } }
+  }).png().toBuffer();
 
-  // Dense floral pattern SVG — mimics the "busy background" needed for edge confusion
-  const floralSvg = `
-<svg xmlns="http://www.w3.org/2000/svg" width="${canvas}" height="${canvas}">
-  <defs>
-    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
-      <stop offset="0%" stop-color="rgb(${r1},${g1},${b1})"/>
-      <stop offset="100%" stop-color="rgb(${r2},${g2},${b2})"/>
-    </radialGradient>
-    <pattern id="florals" x="0" y="0" width="160" height="160" patternUnits="userSpaceOnUse">
-      <!-- Flower 1 -->
-      <circle cx="80" cy="80" r="36" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="4"/>
-      <circle cx="80" cy="80" r="16" fill="rgba(255,255,255,0.08)"/>
-      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(0,80,80)"/>
-      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(45,80,80)"/>
-      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(90,80,80)"/>
-      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(135,80,80)"/>
-      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(180,80,80)"/>
-      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(225,80,80)"/>
-      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(270,80,80)"/>
-      <ellipse cx="80" cy="44" rx="10" ry="20" fill="rgba(255,255,255,0.09)" transform="rotate(315,80,80)"/>
-      <!-- Small dots -->
-      <circle cx="20" cy="20" r="6" fill="rgba(255,255,255,0.07)"/>
-      <circle cx="140" cy="140" r="6" fill="rgba(255,255,255,0.07)"/>
-      <circle cx="20" cy="140" r="4" fill="rgba(255,255,255,0.05)"/>
-      <circle cx="140" cy="20" r="4" fill="rgba(255,255,255,0.05)"/>
-      <!-- Leaf shapes -->
-      <path d="M10 80 Q40 50 70 80 Q40 110 10 80Z" fill="rgba(255,255,255,0.06)"/>
-      <path d="M90 0 Q120 30 90 60 Q60 30 90 0Z" fill="rgba(255,255,255,0.06)"/>
-    </pattern>
-  </defs>
-  <rect width="${canvas}" height="${canvas}" fill="url(#bg)"/>
-  <rect width="${canvas}" height="${canvas}" fill="url(#florals)" opacity="0.8"/>
-</svg>`;
+  // Create a gradient-like overlay using the grad color with transparency
+  const overlay = await sharp({
+    create: { width: canvas, height: Math.round(canvas / 2), channels: 4, background: { ...grad, alpha: 80 } }
+  }).png().toBuffer();
 
-  return sharp(Buffer.from(floralSvg)).png().toBuffer();
+  // Composite gradient overlay onto base
+  return sharp(base)
+    .composite([{ input: overlay, top: Math.round(canvas / 2), left: 0, blend: 'over' }])
+    .png()
+    .toBuffer();
 }
 
 // ── Scoring functions ────────────────────────────────────────
@@ -164,6 +138,7 @@ export async function generateVariants(
 ): Promise<GeneratedVariant[]> {
   const CANVAS = 1024;
   const variants: GeneratedVariant[] = [];
+  let lastError: unknown;
 
   // Try background removal — fall back to original if it fails
   let transparentBuffer = inputBuffer;
@@ -171,13 +146,18 @@ export async function generateVariants(
     const { removeBackground } = await import('@imgly/background-removal-node');
     const blob = new Blob([new Uint8Array(inputBuffer)], { type: 'image/jpeg' });
     const { pathToFileURL } = await import('url');
+    const path = await import('path');
     const config = {
       publicPath: pathToFileURL(path.resolve('./node_modules/@imgly/background-removal-node/dist/')).href + "/",
     };
     const bgRemBlob = await removeBackground(blob, config);
     const arrayBuffer = await bgRemBlob.arrayBuffer();
-    transparentBuffer = Buffer.from(arrayBuffer);
-    console.log('✓ Background removed successfully');
+    if (arrayBuffer.byteLength > 1024) {
+      transparentBuffer = Buffer.from(arrayBuffer);
+      console.log('✓ Background removed successfully');
+    } else {
+      throw new Error("Background removal returned corrupted blob");
+    }
   } catch (err) {
     console.warn('Background removal skipped — using original:', (err as Error).message?.slice(0, 80));
   }
@@ -230,12 +210,6 @@ export async function generateVariants(
       const emojiX4 = offset + productSize - emojiSize + Math.round(emojiSize / 4);
       const emojiY4 = offset + productSize - emojiSize + Math.round(emojiSize / 4);
 
-      // WARRANTY sticker — top left of canvas
-      const warrantySvg = Buffer.from(`
-        <svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS}" height="${CANVAS}">
-        </svg>
-      `);
-
       const eTL = await sharp(EMOJI_BUFFERS[emojiSet.topLeft]).resize(emojiSize, emojiSize).png().toBuffer();
       const eTR = await sharp(EMOJI_BUFFERS[emojiSet.topRight]).resize(emojiSize, emojiSize).png().toBuffer();
       const eBL = await sharp(EMOJI_BUFFERS[emojiSet.bottomLeft]).resize(emojiSize, emojiSize).png().toBuffer();
@@ -245,7 +219,6 @@ export async function generateVariants(
       const result = await sharp(bgBuffer)
         .composite([
           { input: resizedProduct, top: offset, left: offset },
-          { input: warrantySvg,    top: 0,      left: 0 },
           { input: eTL, top: emojiY1, left: emojiX1 },
           { input: eTR, top: emojiY2, left: emojiX2 },
           { input: eBL, top: emojiY3, left: emojiX3 },
@@ -302,7 +275,12 @@ export async function generateVariants(
       });
     } catch (err) {
       console.error(`Variant ${variantId} failed:`, err);
+      lastError = err;
     }
+  }
+
+  if (variants.length === 0 && lastError) {
+    throw new Error(`All variants failed. Last error: ${(lastError as Error).message}`);
   }
 
   return variants;
