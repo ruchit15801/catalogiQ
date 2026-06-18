@@ -34,10 +34,9 @@ export async function POST(req: NextRequest) {
       deadWeight, L, B, H, originalAnalysis.coveragePct || 85, 350, marketplace, zone
     );
 
-    // ── Step 3: Generate all 20 variants (Style A x10 + Style B x10) ─────────
-    const tmpDir  = path.join(os.tmpdir(), `catalogiq_${Date.now()}`);
-    const variants = await generateVariants(inputBuffer, category, tmpDir);
-    const totalGenerated = variants.length; // should be 20
+    // ── Step 3: Generate all variants (Style A + Style B) ─────────
+    const variants = await generateVariants(inputBuffer, category);
+    const totalGenerated = variants.length;
 
     // ── Step 4: Score + shipping for each variant ──────────────────────────
     const scored = variants.map((v) => {
@@ -47,7 +46,6 @@ export async function POST(req: NextRequest) {
       const { predictedSlab, predictedCharge } = predictShippingSlab(
         v.shippingOptScore, shipping.slab, shipping.selectedZoneRate, marketplace, zone
       );
-      // Savings vs baseline (original unoptimized image)
       const savingsPerOrder = Math.max(0, baselineShipping.selectedZoneRate - predictedCharge);
 
       return {
@@ -60,34 +58,25 @@ export async function POST(req: NextRequest) {
     });
 
     // ── Step 5: Sort by predictedCharge ASCENDING (cheapest shipping first) ─
-    // Within same charge, sort by shippingOptScore descending (better image first)
     scored.sort((a, b) => {
       if (a.predictedCharge !== b.predictedCharge) {
-        return a.predictedCharge - b.predictedCharge; // cheapest first
+        return a.predictedCharge - b.predictedCharge;
       }
-      return b.shippingOptScore - a.shippingOptScore; // then by score desc
+      return b.shippingOptScore - a.shippingOptScore;
     });
 
     // ── Step 6: Plans — Free=5 (lowest cost), Paid=20 (all) ─────────────────
-    // Free users get only the 5 cheapest (best deal) variants
-    // Paid users get all 20, grouped as: Lowest / Mid / Higher cost
     const returnCount = planTier === 'paid' ? 20 : 5;
     const top = scored.slice(0, returnCount);
 
     // ── Build response with base64 images ───────────────────────────────────
-    // Determine tier labels for UI display
     const minCharge = scored[0]?.predictedCharge ?? 0;
     const maxCharge = scored[scored.length - 1]?.predictedCharge ?? 0;
     const midThreshold = minCharge + Math.round((maxCharge - minCharge) * 0.4);
     const highThreshold = minCharge + Math.round((maxCharge - minCharge) * 0.7);
 
     const results = top.map((v, i) => {
-      const imgPath = path.join(tmpDir, v.filename);
-      let imageBase64 = '';
-      try {
-        const buf = fs.readFileSync(imgPath);
-        imageBase64 = `data:image/jpeg;base64,${buf.toString('base64')}`;
-      } catch {}
+      const imageBase64 = `data:image/jpeg;base64,${v.buffer.toString('base64')}`;
 
       // Classify cost tier
       const costTier: 'lowest' | 'medium' | 'higher' =
@@ -138,9 +127,7 @@ export async function POST(req: NextRequest) {
         masterPrompt:       v.masterPrompt,
       };
     });
-
-    // Cleanup temp files
-    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+    // Temp files are no longer used since we hold buffers directly in memory
 
     return NextResponse.json({
       success: true,

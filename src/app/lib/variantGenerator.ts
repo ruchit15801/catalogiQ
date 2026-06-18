@@ -154,16 +154,14 @@ export interface GeneratedVariant {
   confidence: number;
   // Dynamic prompt
   masterPrompt: string;
+  buffer: Buffer; // Hold image directly in memory
 }
 
 // ── Main export ──────────────────────────────────────────────
 export async function generateVariants(
   inputBuffer: Buffer,
   category: string,
-  outputDir: string,
 ): Promise<GeneratedVariant[]> {
-  if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
-
   const CANVAS = 1024;
   const variants: GeneratedVariant[] = [];
 
@@ -191,11 +189,10 @@ export async function generateVariants(
 
     const emojiSet = EMOJI_SETS[bg.emojiSetIndex];
     const coverage = bg.coverage;
-    const quality = 82; // Ensures under 1MB for 1024x1024
+    const quality = 70; // Lowered to 70 to avoid 4.5MB Vercel serverless payload limit
 
     const productSize = Math.round(CANVAS * coverage / 100);
     const filename    = `${variantId.toLowerCase()}_${bg.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
-    const outPath     = path.join(outputDir, filename);
     const productName = category || "Product";
 
     try {
@@ -257,7 +254,6 @@ export async function generateVariants(
         .jpeg({ quality, mozjpeg: true })
         .toBuffer();
 
-      fs.writeFileSync(outPath, result);
       const fileSizeKB = Math.round(result.length / 1024);
       
       // Ensure file size is logged if > 1MB
@@ -302,6 +298,7 @@ export async function generateVariants(
         shippingOptScore,
         confidence,
         masterPrompt,
+        buffer: result,
       });
     } catch (err) {
       console.error(`Variant ${variantId} failed:`, err);

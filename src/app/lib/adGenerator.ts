@@ -192,7 +192,7 @@ The output should look like a luxury high-end commercial advertisement.`;
           { input: resizedProduct, top: offset, left: offset },
           { input: overlaySvg, top: 0, left: 0 }
         ])
-        .jpeg({ quality: 90, mozjpeg: true })
+        .jpeg({ quality: 75, mozjpeg: true })
         .toBuffer();
 
       results.push({
